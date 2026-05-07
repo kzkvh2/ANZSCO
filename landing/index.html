@@ -116,7 +116,7 @@
           2. Enter lizanpeter@gmail.com and click "Create Access Key"
           3. Check your email and copy the access key
           4. Paste it as the value of the hidden "access_key" input below
-             (replace REPLACE_WITH_WEB3FORMS_ACCESS_KEY in both forms)
+             (replace 7fdb3ee2-ba92-4fed-bcd8-ecc37e4e39a3 in both forms)
           Submissions will land in your inbox immediately. No account needed.
           ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
         -->
@@ -126,7 +126,7 @@
           class="flex flex-col sm:flex-row gap-3"
           onsubmit="handleSubmit(event, this)"
         >
-          <input type="hidden" name="access_key" value="REPLACE_WITH_WEB3FORMS_ACCESS_KEY" />
+          <input type="hidden" name="access_key" value="7fdb3ee2-ba92-4fed-bcd8-ecc37e4e39a3" />
           <input type="hidden" name="subject" value="New ANZSCO Finder waitlist signup" />
           <input type="hidden" name="redirect" value="false" />
           <input type="checkbox" name="botcheck" style="display:none" />
@@ -327,7 +327,7 @@
         class="flex flex-col sm:flex-row gap-3 max-w-sm mx-auto"
         onsubmit="handleSubmit(event, this)"
       >
-        <input type="hidden" name="access_key" value="REPLACE_WITH_WEB3FORMS_ACCESS_KEY" />
+        <input type="hidden" name="access_key" value="7fdb3ee2-ba92-4fed-bcd8-ecc37e4e39a3" />
         <input type="hidden" name="subject" value="New ANZSCO Finder waitlist signup" />
         <input type="hidden" name="redirect" value="false" />
         <input type="checkbox" name="botcheck" style="display:none" />
@@ -382,7 +382,7 @@
       e.preventDefault();
 
       const key = form.querySelector('[name="access_key"]').value;
-      if (key === 'REPLACE_WITH_WEB3FORMS_ACCESS_KEY') {
+      if (key === '7fdb3ee2-ba92-4fed-bcd8-ecc37e4e39a3') {
         showMessage(form, 'success', "You're on the list! We'll be in touch soon.");
         return;
       }
