@@ -140,6 +140,8 @@ mate1/
 │   └── api/                      ← Phase 4+: FastAPI app
 ├── tests/
 │   └── acceptance/               ← 10 ground-truth CV test cases
+├── docs/                         ← Landing page (GitHub Pages — served from /docs)
+│   └── index.html                ← Web3Forms waitlist, SEO meta tags
 └── app/                          ← Phase 2: Streamlit demo
 ```
 
