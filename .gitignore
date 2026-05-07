@@ -1,0 +1,10 @@
+.venv/
+__pycache__/
+*.pyc
+.env
+data/raw/unit_group_pages/
+data/processed/anzsco_embeddings.npy
+tests/acceptance/last_run.json
+/tmp/
+*.log
+.DS_Store

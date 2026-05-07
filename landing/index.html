@@ -1,0 +1,398 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+  <!-- SEO -->
+  <title>ANZSCO Code Finder — Find Your Australian Occupation Code Free</title>
+  <meta name="description" content="Upload your CV and instantly find your ANZSCO occupation code for Australian skilled migration visas. Free AI-powered tool. Get your top 5 matches in seconds." />
+  <meta name="keywords" content="ANZSCO code finder, find my ANZSCO code, Australian occupation code, skilled migration visa, ANZSCO 2022" />
+  <link rel="canonical" href="https://kzkvh2.github.io/ANZSCO/" />
+
+  <!-- Open Graph -->
+  <meta property="og:title" content="ANZSCO Code Finder — Free for Skilled Migrants" />
+  <meta property="og:description" content="Stop guessing your ANZSCO code. Upload your CV and get your top 5 matches instantly — before paying a migration agent." />
+  <meta property="og:type" content="website" />
+  <meta property="og:url" content="https://kzkvh2.github.io/ANZSCO/" />
+
+  <!-- Tailwind CSS -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            brand: {
+              50:  '#eff6ff',
+              100: '#dbeafe',
+              500: '#3b82f6',
+              600: '#2563eb',
+              700: '#1d4ed8',
+              800: '#1e40af',
+              900: '#1e3a8a',
+            },
+            gold: '#f59e0b',
+          },
+          fontFamily: {
+            sans: ['Inter', 'system-ui', 'sans-serif'],
+          },
+        }
+      }
+    }
+  </script>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+
+  <style>
+    html { scroll-behavior: smooth; }
+    .gradient-hero {
+      background: linear-gradient(135deg, #1e3a8a 0%, #1d4ed8 50%, #2563eb 100%);
+    }
+    .card-hover {
+      transition: transform 0.2s ease, box-shadow 0.2s ease;
+    }
+    .card-hover:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+    }
+    /* Mailchimp form — remove their default styles */
+    #mc_embed_signup input[type="email"] {
+      all: unset;
+    }
+  </style>
+</head>
+
+<body class="font-sans text-gray-900 bg-white antialiased">
+
+  <!-- ======================================================== -->
+  <!-- NAV                                                       -->
+  <!-- ======================================================== -->
+  <nav class="fixed top-0 left-0 right-0 z-50 bg-white/95 backdrop-blur border-b border-gray-100">
+    <div class="max-w-5xl mx-auto px-4 sm:px-6 flex items-center justify-between h-16">
+      <div class="flex items-center gap-2">
+        <span class="text-2xl">🇦🇺</span>
+        <span class="font-bold text-brand-800 text-lg">ANZSCO Finder</span>
+      </div>
+      <a href="#waitlist"
+         class="bg-brand-700 hover:bg-brand-800 text-white text-sm font-semibold px-4 py-2 rounded-lg transition-colors">
+        Get Early Access
+      </a>
+    </div>
+  </nav>
+
+
+  <!-- ======================================================== -->
+  <!-- HERO                                                      -->
+  <!-- ======================================================== -->
+  <section class="gradient-hero pt-32 pb-24 px-4 sm:px-6">
+    <div class="max-w-3xl mx-auto text-center">
+
+      <div class="inline-flex items-center gap-2 bg-white/15 text-white text-sm font-medium px-4 py-1.5 rounded-full mb-6">
+        <span class="w-2 h-2 bg-green-400 rounded-full animate-pulse"></span>
+        Now in development — join the waitlist
+      </div>
+
+      <h1 class="text-4xl sm:text-5xl lg:text-6xl font-extrabold text-white leading-tight mb-6">
+        Find your ANZSCO code<br class="hidden sm:block" />
+        <span class="text-yellow-300">in 60 seconds</span> — free
+      </h1>
+
+      <p class="text-lg sm:text-xl text-blue-100 mb-10 max-w-2xl mx-auto leading-relaxed">
+        Upload your CV. Our AI reads your experience and matches it against every
+        ANZSCO 2022 occupation code — so you apply for the right visa category
+        <strong class="text-white">the first time.</strong>
+      </p>
+
+      <!-- Waitlist form — hero -->
+      <div id="waitlist" class="bg-white rounded-2xl p-6 sm:p-8 shadow-2xl max-w-md mx-auto">
+        <p class="text-brand-800 font-bold text-lg mb-1">Join the waitlist</p>
+        <p class="text-gray-500 text-sm mb-5">Be first when we launch. No spam, unsubscribe any time.</p>
+
+        <!--
+          ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+          MAILCHIMP SETUP (one-time, ~5 minutes):
+          1. Go to mailchimp.com → Audience → Signup forms → Embedded forms
+          2. Copy the form action URL (looks like:
+             https://xxxx.us21.list-manage.com/subscribe/post?u=xxx&id=xxx)
+          3. Replace the action URL below with yours
+          4. You're done — submissions go straight to your Mailchimp audience
+          ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+        -->
+        <form
+          action="REPLACE_WITH_YOUR_MAILCHIMP_ACTION_URL"
+          method="post"
+          target="_blank"
+          novalidate
+          class="flex flex-col sm:flex-row gap-3"
+          onsubmit="handleSubmit(event)"
+        >
+          <input
+            type="email"
+            name="EMAIL"
+            placeholder="your@email.com"
+            required
+            class="flex-1 border border-gray-300 rounded-lg px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-transparent"
+          />
+          <!-- Mailchimp honeypot — do not remove -->
+          <div style="position:absolute;left:-5000px" aria-hidden="true">
+            <input type="text" name="b_PLACEHOLDER" tabindex="-1" value="" />
+          </div>
+          <button
+            type="submit"
+            class="bg-brand-700 hover:bg-brand-800 text-white font-semibold px-6 py-3 rounded-lg text-sm transition-colors whitespace-nowrap"
+          >
+            Get Early Access →
+          </button>
+        </form>
+        <p class="text-xs text-gray-400 mt-3">
+          🔒 Your email is safe. We use Mailchimp and never share your data.
+        </p>
+      </div>
+
+    </div>
+  </section>
+
+
+  <!-- ======================================================== -->
+  <!-- SOCIAL PROOF BAR                                         -->
+  <!-- ======================================================== -->
+  <section class="bg-gray-50 border-y border-gray-100 py-6 px-4">
+    <div class="max-w-4xl mx-auto flex flex-wrap justify-center gap-8 text-center">
+      <div>
+        <div class="text-2xl font-extrabold text-brand-800">1,076</div>
+        <div class="text-xs text-gray-500 font-medium uppercase tracking-wide mt-0.5">ANZSCO occupation codes</div>
+      </div>
+      <div class="w-px bg-gray-200 hidden sm:block"></div>
+      <div>
+        <div class="text-2xl font-extrabold text-brand-800">ANZSCO 2022</div>
+        <div class="text-xs text-gray-500 font-medium uppercase tracking-wide mt-0.5">Always up to date</div>
+      </div>
+      <div class="w-px bg-gray-200 hidden sm:block"></div>
+      <div>
+        <div class="text-2xl font-extrabold text-brand-800">Top 5</div>
+        <div class="text-xs text-gray-500 font-medium uppercase tracking-wide mt-0.5">Ranked matches returned</div>
+      </div>
+      <div class="w-px bg-gray-200 hidden sm:block"></div>
+      <div>
+        <div class="text-2xl font-extrabold text-brand-800">Free</div>
+        <div class="text-xs text-gray-500 font-medium uppercase tracking-wide mt-0.5">No account required</div>
+      </div>
+    </div>
+  </section>
+
+
+  <!-- ======================================================== -->
+  <!-- PROBLEM                                                   -->
+  <!-- ======================================================== -->
+  <section class="py-20 px-4 sm:px-6">
+    <div class="max-w-5xl mx-auto">
+      <div class="text-center mb-14">
+        <h2 class="text-3xl sm:text-4xl font-extrabold text-gray-900 mb-4">
+          Getting your ANZSCO code wrong is expensive
+        </h2>
+        <p class="text-gray-500 text-lg max-w-2xl mx-auto">
+          Most skilled migrants guess — or pay hundreds per hour to find out.
+        </p>
+      </div>
+
+      <div class="grid sm:grid-cols-3 gap-6">
+        <div class="card-hover bg-red-50 border border-red-100 rounded-2xl p-6">
+          <div class="text-3xl mb-3">💸</div>
+          <h3 class="font-bold text-gray-900 mb-2">$500–$1,500 in wasted fees</h3>
+          <p class="text-gray-600 text-sm leading-relaxed">
+            Skills assessment fees are non-refundable. A wrong code means starting over — and paying again.
+          </p>
+        </div>
+        <div class="card-hover bg-orange-50 border border-orange-100 rounded-2xl p-6">
+          <div class="text-3xl mb-3">⏳</div>
+          <h3 class="font-bold text-gray-900 mb-2">Years of delay</h3>
+          <p class="text-gray-600 text-sm leading-relaxed">
+            A failed assessment resets your timeline. Some applicants wait 2–3 years before re-applying.
+          </p>
+        </div>
+        <div class="card-hover bg-yellow-50 border border-yellow-100 rounded-2xl p-6">
+          <div class="text-3xl mb-3">🤷</div>
+          <h3 class="font-bold text-gray-900 mb-2">$300/hr migration agents</h3>
+          <p class="text-gray-600 text-sm leading-relaxed">
+            The only alternative today is paying a MARA agent just to tell you which code to use.
+          </p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+
+  <!-- ======================================================== -->
+  <!-- HOW IT WORKS                                              -->
+  <!-- ======================================================== -->
+  <section class="bg-gray-50 py-20 px-4 sm:px-6">
+    <div class="max-w-4xl mx-auto">
+      <div class="text-center mb-14">
+        <h2 class="text-3xl sm:text-4xl font-extrabold text-gray-900 mb-4">How it works</h2>
+        <p class="text-gray-500 text-lg">Three steps. No account. No credit card.</p>
+      </div>
+
+      <div class="grid sm:grid-cols-3 gap-8">
+        <div class="text-center">
+          <div class="w-14 h-14 bg-brand-700 rounded-2xl flex items-center justify-center text-white text-2xl mx-auto mb-4 shadow-lg">
+            📄
+          </div>
+          <div class="text-xs font-bold text-brand-600 uppercase tracking-widest mb-2">Step 1</div>
+          <h3 class="font-bold text-gray-900 text-lg mb-2">Upload your CV</h3>
+          <p class="text-gray-500 text-sm leading-relaxed">
+            PDF or Word. Our parser reads your job titles, duties and skills — not just keywords.
+          </p>
+        </div>
+        <div class="text-center">
+          <div class="w-14 h-14 bg-brand-700 rounded-2xl flex items-center justify-center text-white text-2xl mx-auto mb-4 shadow-lg">
+            🤖
+          </div>
+          <div class="text-xs font-bold text-brand-600 uppercase tracking-widest mb-2">Step 2</div>
+          <h3 class="font-bold text-gray-900 text-lg mb-2">AI matches your experience</h3>
+          <p class="text-gray-500 text-sm leading-relaxed">
+            We compare your profile against all 1,076 ANZSCO 2022 occupation descriptions and task lists.
+          </p>
+        </div>
+        <div class="text-center">
+          <div class="w-14 h-14 bg-brand-700 rounded-2xl flex items-center justify-center text-white text-2xl mx-auto mb-4 shadow-lg">
+            🎯
+          </div>
+          <div class="text-xs font-bold text-brand-600 uppercase tracking-widest mb-2">Step 3</div>
+          <h3 class="font-bold text-gray-900 text-lg mb-2">Get your top 5 codes</h3>
+          <p class="text-gray-500 text-sm leading-relaxed">
+            Ranked by match quality with a confidence score and a plain-English explanation for each.
+          </p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+
+  <!-- ======================================================== -->
+  <!-- FOR WHOM                                                  -->
+  <!-- ======================================================== -->
+  <section class="py-20 px-4 sm:px-6">
+    <div class="max-w-5xl mx-auto">
+      <div class="text-center mb-14">
+        <h2 class="text-3xl sm:text-4xl font-extrabold text-gray-900 mb-4">
+          Built for skilled migrants applying to Australia
+        </h2>
+        <p class="text-gray-500 text-lg max-w-2xl mx-auto">
+          Whether you're an engineer in India, a nurse in the Philippines, or an accountant in Nepal —
+          your ANZSCO code is the first step on your visa journey.
+        </p>
+      </div>
+
+      <div class="grid sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        <div class="card-hover bg-white border border-gray-200 rounded-xl p-5 text-center">
+          <div class="text-3xl mb-2">🇮🇳</div>
+          <p class="font-semibold text-gray-800 text-sm">IT professionals</p>
+          <p class="text-gray-400 text-xs mt-1">India, Sri Lanka</p>
+        </div>
+        <div class="card-hover bg-white border border-gray-200 rounded-xl p-5 text-center">
+          <div class="text-3xl mb-2">🇵🇭</div>
+          <p class="font-semibold text-gray-800 text-sm">Nurses & carers</p>
+          <p class="text-gray-400 text-xs mt-1">Philippines, Fiji</p>
+        </div>
+        <div class="card-hover bg-white border border-gray-200 rounded-xl p-5 text-center">
+          <div class="text-3xl mb-2">🇳🇵</div>
+          <p class="font-semibold text-gray-800 text-sm">Accountants & finance</p>
+          <p class="text-gray-400 text-xs mt-1">Nepal, Bangladesh</p>
+        </div>
+        <div class="card-hover bg-white border border-gray-200 rounded-xl p-5 text-center">
+          <div class="text-3xl mb-2">🇨🇳</div>
+          <p class="font-semibold text-gray-800 text-sm">Engineers & architects</p>
+          <p class="text-gray-400 text-xs mt-1">China, Vietnam</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+
+  <!-- ======================================================== -->
+  <!-- SECOND CTA                                                -->
+  <!-- ======================================================== -->
+  <section class="gradient-hero py-20 px-4 sm:px-6">
+    <div class="max-w-xl mx-auto text-center">
+      <h2 class="text-3xl sm:text-4xl font-extrabold text-white mb-4">
+        Be first to try it — free
+      </h2>
+      <p class="text-blue-100 mb-8 text-lg">
+        We're launching soon. Join the waitlist and get access before everyone else.
+      </p>
+
+      <form
+        action="REPLACE_WITH_YOUR_MAILCHIMP_ACTION_URL"
+        method="post"
+        target="_blank"
+        novalidate
+        class="flex flex-col sm:flex-row gap-3 max-w-sm mx-auto"
+        onsubmit="handleSubmit(event)"
+      >
+        <input
+          type="email"
+          name="EMAIL"
+          placeholder="your@email.com"
+          required
+          class="flex-1 border-0 rounded-lg px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-yellow-400 text-gray-900"
+        />
+        <div style="position:absolute;left:-5000px" aria-hidden="true">
+          <input type="text" name="b_PLACEHOLDER" tabindex="-1" value="" />
+        </div>
+        <button
+          type="submit"
+          class="bg-yellow-400 hover:bg-yellow-300 text-gray-900 font-bold px-6 py-3 rounded-lg text-sm transition-colors whitespace-nowrap"
+        >
+          Join Waitlist →
+        </button>
+      </form>
+      <p class="text-blue-200 text-xs mt-4">No spam. Unsubscribe any time.</p>
+    </div>
+  </section>
+
+
+  <!-- ======================================================== -->
+  <!-- FOOTER                                                    -->
+  <!-- ======================================================== -->
+  <footer class="bg-gray-900 text-gray-400 py-10 px-4 sm:px-6">
+    <div class="max-w-4xl mx-auto">
+      <div class="flex flex-col sm:flex-row items-center justify-between gap-4 mb-6">
+        <div class="flex items-center gap-2">
+          <span class="text-xl">🇦🇺</span>
+          <span class="text-white font-bold">ANZSCO Finder</span>
+        </div>
+        <div class="text-xs text-center sm:text-right leading-relaxed max-w-sm">
+          This tool provides general information only and does not constitute
+          registered migration advice. Always verify your code with the relevant
+          assessing body. For binding advice, consult a registered MARA agent.
+        </div>
+      </div>
+      <div class="border-t border-gray-800 pt-6 text-xs text-center text-gray-600">
+        © 2026 ANZSCO Finder. ANZSCO 2022 data sourced from the Australian Bureau of Statistics.
+        This product is not affiliated with or endorsed by the ABS or the Department of Home Affairs.
+      </div>
+    </div>
+  </footer>
+
+
+  <!-- ======================================================== -->
+  <!-- SCRIPTS                                                   -->
+  <!-- ======================================================== -->
+  <script>
+    function handleSubmit(e) {
+      const form = e.target;
+      const action = form.getAttribute('action');
+
+      // If Mailchimp URL not yet configured, show a friendly message
+      if (action === 'REPLACE_WITH_YOUR_MAILCHIMP_ACTION_URL') {
+        e.preventDefault();
+        alert('Waitlist form coming soon! Check back shortly.');
+        return;
+      }
+      // Otherwise let the form POST to Mailchimp normally (opens in new tab)
+    }
+  </script>
+
+</body>
+</html>
