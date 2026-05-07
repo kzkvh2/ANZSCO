@@ -4,10 +4,20 @@ _Last updated: 2026-05-07_
 ## Project Overview
 **ANZSCO Code Finder** — A tool for skilled migrants to identify the correct ANZSCO occupation code for Australian visa applications, without paying a migration agent.
 
-**Who it's for**: Foreign skilled workers applying for Australian visas (Indian, Filipino, Nepali, Chinese applicants are primary target).  
-**Core problem**: Getting the wrong ANZSCO code = visa refusal, failed skills assessment ($500–$1,500 in fees), years of delay.  
-**Current validation team**: Peter + Mate. No investor demo planned.  
+**Who it's for**: Foreign skilled workers applying for Australian visas.
+**Core problem**: Getting the wrong ANZSCO code = visa refusal, failed skills assessment ($500–$1,500 in fees), years of delay.
+**Current team**: Peter + Máté (validation). No investor demo planned.
 **Regulatory position**: Information tool, not migration advice. Strong disclaimers required.
+
+---
+
+## Live Products
+
+| Product | URL | Status |
+|---|---|---|
+| Landing page | https://kzkvh2.github.io/ANZSCO/ | Live — waitlist, Web3Forms email capture working |
+| Streamlit app | https://anzsco.streamlit.app/ | Live — full CV matching, public |
+| GitHub repo | https://github.com/kzkvh2/ANZSCO | Public |
 
 ---
 
@@ -19,28 +29,23 @@ _Last updated: 2026-05-07_
 - Each document: occupation title + alt titles + specialisations + unit group overview + task list + occupation description
 - Median 167 words/document; 87% have task lists; 100% have occupation descriptions
 - Update-check mechanism: SHA-256 checksums per source; changed sources flag `needs_review=True` on affected documents; human review required before going live
-- Data freshness cadence: re-run scraper a few times per year or when ABS releases updates
 
 ### Phase 1 — Matching Engine ✅ COMPLETE
-Built the core pipeline: CV text → top 5 ANZSCO codes with match scores and explanations.
+- Embeddings: all-MiniLM-L6-v2, shape (1076, 384), stored in `data/processed/anzsco_embeddings.npy` (gitignored, auto-rebuilt on cold start)
+- CV parser: pdfminer.six (PDF) + python-docx (Word)
+- Pipeline: Claude Sonnet extracts structured profile → cosine similarity top 20 → Claude Haiku re-ranks to top 5 with explanations
+- Match quality score: 0–100 per result, confidence: high/medium/low
+- Parsability score: composite of word count + encoding quality + structure + CV signal keywords
 
-Steps:
-1. [x] Embed all 1,076 documents with `sentence-transformers` (all-MiniLM-L6-v2), saved as numpy array — shape (1076, 384), built in 33s
-2. [x] CV parser: pdfminer.six for PDF, python-docx for Word — `src/rag/cv_parser.py`
-3. [x] CV pre-processor: Claude extracts structured profile (job titles, duties, skills, industries) — Step 1 of matcher
-4. [x] Matcher: embed profile → cosine similarity top 20 → Claude re-ranks to top 5 with explanations — `src/rag/matcher.py`
-5. [x] Match quality score: 0–100 per result, confidence: high/medium/low
-6. [x] Parsability score: composite of word count + encoding quality + structure + CV signal keywords
-
-### Phase 2 — Demo App ✅ BUILT (needs live test)
-Streamlit app at `app/streamlit_app.py`.
-- Upload CV (PDF or Word)
-- See parsability score (0–100) with warning if low
-- See top 5 ANZSCO matches: code, title, match score, confidence, 1-sentence explanation
+### Phase 2 — Demo App ✅ DEPLOYED
+- Streamlit app at `app/streamlit_app.py`, live at https://anzsco.streamlit.app/
+- st.cache_resource preloads model + embeddings at startup (avoids per-request rebuild)
+- First cold start ~1 min (model download + embedding rebuild on Streamlit Cloud)
+- Shows parsability score with tier-specific actionable guidance (≥70/50-70/<50)
+- Shows top 5 matches with match score bar, confidence indicator, and 1-sentence explanation
 - Timing breakdown shown
-- Disclaimer shown
-- Run: `ANTHROPIC_API_KEY=sk-ant-... .venv/bin/streamlit run app/streamlit_app.py`
-- **Blocked on**: ANTHROPIC_API_KEY set in WSL environment
+- Disclaimer and Home Affairs link shown
+- Run locally: `ANTHROPIC_API_KEY=sk-ant-... .venv/bin/streamlit run app/streamlit_app.py`
 
 ### Phase 3 — Acceptance Test ✅ PASSED (2026-05-07)
 - Top-5 accuracy: **10/10 (100%)** — target was ≥8/10
@@ -48,23 +53,40 @@ Streamlit app at `app/streamlit_app.py`.
 - Avg time: 10.4s/CV (cold model load amortised after first call)
 - Two misses on #1: Marketing Manager (got Sales & Marketing Manager — acceptable), HR Manager (got 132311 vs 132111 — one digit off, same level)
 - Full results: `tests/acceptance/last_run.json`
+- **Caveat**: All 10 CVs are synthetic, mid-career, written by us. Real-world accuracy unvalidated.
 
-### Phase 4 — Landing Page
-Simple public page to validate demand. Not the full product.
-- Headline: "Find your ANZSCO code in 60 seconds — free"
-- Email capture / waitlist
-- Optional: teaser of the tool (limited free uses)
-- SEO target: "ANZSCO code for [job title]" searches
-- No auth, no payment processing yet
-
-### Known Issues / Backlog
-- **Seniority & tenure not considered**: A candidate with 20 years of IT experience who ran a service desk will match ICT Support Technician (a junior code) instead of a management/senior code. The profile extraction captures seniority but the re-ranker does not penalise codes that are mismatched to experience level. Fix: add seniority signal to the re-rank prompt and filter out codes whose skill level is inconsistent with the candidate's years of experience.
+### Phase 4 — Landing Page ✅ COMPLETE
+- Live at https://kzkvh2.github.io/ANZSCO/ (GitHub Pages, served from /docs)
+- Waitlist-only — tool not linked from landing page
+- Web3Forms email capture working (access key in HTML); emails forward to lizanpeter@gmail.com
+- SEO meta tags, OG tags, canonical URL set
+- Deployed via GitHub Pages on main branch /docs folder
 
 ### Phase 5 — Agent Extension (Later)
 - Bulk CV upload
 - PDF report output
 - API for migration agent platforms
-- Possibly: visa pathway overlay, assessing body guidance
+- Visa pathway overlay, assessing body guidance
+
+---
+
+## Strategic Backlog / Known Issues
+
+### Critical (before scaling traffic)
+- **No analytics**: Don't know if anyone is using the app, what accuracy looks like in production
+- **No feedback mechanism**: No way for users to signal whether results were helpful or wrong
+- **Disconnected products**: Landing page (waitlist) and app are not linked. Users who sign up don't get app access. App is public but unadvertised.
+- **Cold start UX**: ~1 min first load on Streamlit Cloud after inactivity. Users will think it's broken.
+- **Acceptance test validity**: 10 synthetic CVs written by us. Not a real-world accuracy benchmark.
+
+### Matching Quality
+- **Seniority & tenure not considered**: A candidate with 20 years IT management experience may match ICT Support Technician (junior code). Profile extraction captures seniority but re-ranker doesn't use it. Fix: add seniority/skill-level signal to re-rank prompt.
+
+### Product/Strategic
+- **Monetisation path undefined**: Tool is free and unlinked. No freemium gate, no conversion funnel.
+- **Mobile UX**: Streamlit is desktop-first. Target audience (Indian, Filipino, Nepali applicants) is mobile-heavy.
+- **Streamlit is not a long-term platform**: Generic look, no custom branding, poor mobile, no session persistence.
+- **Real user validation needed**: 10 real users with real CVs, not synthetic test cases.
 
 ---
 
@@ -77,19 +99,11 @@ Simple public page to validate demand. Not the full product.
 ### Output
 - Top 5 ANZSCO matches, ranked
 - Each: 6-digit code + title + 1-sentence match explanation + match quality score (0–100)
-- Expandable later: location availability, industry, assessing body, visa pathway
 
 ### Data — CRITICAL
 - Source: ANZSCO 2022 (ABS). Must always be current.
 - Update mechanism: checksum-based change detection → human review before live
-- All sources versioned and documented
 - Re-run scraper a few times per year or on ABS release
-
-### Acceptance Test
-- 10 ground-truth CVs: software engineer, nurse, accountant, chef, civil engineer, teacher, electrician, marketing manager, architect, HR manager
-- Pass: correct code in top 5 for ≥8/10 (80%)
-- Stretch: #1 for ≥5/10 (50%)
-- Speed: <10s
 
 ---
 
@@ -100,13 +114,12 @@ Simple public page to validate demand. Not the full product.
 | Data pipeline | Custom scraper (requests + BeautifulSoup) | Direct ABS source, versioned |
 | Embeddings | sentence-transformers (all-MiniLM-L6-v2) | Fast, local, no API cost for indexing |
 | Vector search | numpy cosine similarity | 1,076 items — no DB needed |
-| LLM (re-rank + explain) | Claude API (claude-sonnet-4-6) | Best reasoning, prompt caching |
+| LLM (re-rank + explain) | Claude API (claude-haiku-4-5 + claude-sonnet-4-6) | Best reasoning, prompt caching |
 | CV parsing | pdfminer.six + python-docx | Handles PDF and Word |
 | ATS score | textstat + word count heuristics | Simple parsability signal |
-| Demo app | Streamlit | Fast to build, easy to share locally |
-| Landing page | TBD (simple HTML or Next.js) | Phase 4 decision |
-
-**Removed from original plan**: LangChain, LlamaIndex, ChromaDB — unnecessary complexity for this scale.
+| Demo app | Streamlit (anzsco.streamlit.app) | Fast to build; not a long-term platform |
+| Landing page | HTML + Tailwind CSS (GitHub Pages) | Zero hosting cost |
+| Email capture | Web3Forms (free) | Zero setup, no backend |
 
 ---
 
@@ -120,55 +133,66 @@ Simple public page to validate demand. Not the full product.
 ```
 mate1/
 ├── current_state.md              ← read this first each session
+├── requirements.txt              ← pip dependencies for Streamlit Cloud
+├── .streamlit/config.toml        ← brand colours, upload limit
 ├── .venv/                        ← Python 3.12 virtual environment
 ├── analysis/
 │   └── anzsco_research.ipynb     ← data exploration notebook
 ├── data/
 │   ├── raw/
-│   │   ├── anzsco_structure.xlsx ← ABS download (structure + codes)
-│   │   ├── anzsco_index.xlsx     ← ABS download (alt titles + specialisations)
-│   │   ├── checksums.json        ← SHA-256 per source (update detection)
-│   │   ├── change_log.json       ← audit trail of detected changes
-│   │   └── unit_group_pages/     ← 364 cached HTML pages
+│   │   ├── anzsco_structure.xlsx
+│   │   ├── anzsco_index.xlsx
+│   │   ├── checksums.json
+│   │   ├── change_log.json
+│   │   └── unit_group_pages/     ← 364 cached HTML pages (gitignored)
 │   └── processed/
-│       ├── anzsco_documents.json ← 1,076 composite documents (ready for embedding)
-│       └── needs_review.json     ← codes flagged for human review (empty = clean)
+│       ├── anzsco_documents.json ← 1,076 composite documents (committed)
+│       ├── anzsco_metadata.json  ← code/title index (committed)
+│       ├── embeddings_hash.txt   ← SHA-256 of documents (committed)
+│       └── anzsco_embeddings.npy ← embedding vectors (gitignored, auto-rebuilt)
 ├── src/
-│   ├── scraper/
-│   │   └── anzsco_scraper.py     ← data pipeline (run to refresh data)
-│   ├── rag/                      ← Phase 1: embedding + matching
-│   └── api/                      ← Phase 4+: FastAPI app
-├── tests/
-│   └── acceptance/               ← 10 ground-truth CV test cases
-├── docs/                         ← Landing page (GitHub Pages — served from /docs)
-│   └── index.html                ← Web3Forms waitlist, SEO meta tags
-└── app/                          ← Phase 2: Streamlit demo
+│   ├── scraper/anzsco_scraper.py
+│   └── rag/
+│       ├── cv_parser.py
+│       ├── embedder.py
+│       └── matcher.py            ← preload() + match_cv()
+├── tests/acceptance/
+│   ├── acceptance_test.py
+│   ├── smoke_test.py
+│   └── last_run.json             ← gitignored
+├── docs/                         ← Landing page (GitHub Pages)
+│   └── index.html
+└── app/
+    └── streamlit_app.py          ← Demo app (Streamlit Cloud)
 ```
 
 ## Context Management Convention
 - This file is the single source of truth. Read it at the start of every session.
 - Update it at the end of each session or after a significant milestone.
-- Run `Save Findings` cell in the notebook before clearing context.
 
 ---
 
 ## Data Findings
 
+### Findings — 2026-05-07 (Phase 4 complete, all MVP phases done)
+- Landing page live with working email capture (Web3Forms confirmed working end-to-end)
+- Streamlit app deployed at anzsco.streamlit.app (Streamlit Community Cloud)
+- Assessing body links removed from results — confusing, premature for monetisation
+- Key deployment detail: anzsco_embeddings.npy is gitignored; Streamlit Cloud auto-rebuilds via build_embeddings() on cold start; st.cache_resource prevents rebuild per re-run
+
+### Findings — 2026-05-07 (Phase 3 complete)
+- Top-5 accuracy: 10/10 (100%) — target was ≥8/10
+- Top-1 accuracy: 8/10 (80%) — target was ≥5/10
+- Avg time: 10.4s/CV
+
 ### Findings — 2026-05-07 (Phase 1 complete)
-- Embeddings built: 1,076 docs × 384 dimensions, 33s on CPU, saved to `data/processed/anzsco_embeddings.npy`
+- Embeddings built: 1,076 docs × 384 dimensions, 33s on CPU
 - Full pipeline: CV text → Claude profile extraction → cosine similarity (top 20) → Claude re-rank → top 5
-- Two Claude calls per CV: extract profile + re-rank. Both use prompt caching.
-- Parsability score implemented: word count + encoding + structure + CV signal keywords
-- Streamlit demo app built at `app/streamlit_app.py` — needs ANTHROPIC_API_KEY to run
-- Smoke test at `tests/acceptance/smoke_test.py` — run to validate before acceptance suite
-- **NOT YET RUN end-to-end**: API key not set in WSL environment — needs `export ANTHROPIC_API_KEY=sk-ant-...`
+- Two Claude calls per CV: extract profile (Sonnet) + re-rank (Haiku). Both use prompt caching.
 
 ### Findings — 2026-05-07 (Phase 0 complete)
 - ABS provides direct Excel downloads — no fragile web scraping needed for structure data
 - 1,076 six-digit occupation codes across 364 unit groups
-- 467 alternative job titles + 1,408 specialisations in index file (key for matching real-world CV job titles)
-- Unit group web pages have rich descriptions: overview paragraph + 5–12 task bullet points + per-occupation descriptions
-- Composite documents: median 167 words, 87% have task lists, 100% have occupation descriptions, only 3 thin docs (<30 words)
-- Data is good enough for embedding — original concern about thin descriptions was unfounded
-- Checksum-based update mechanism operational: tracks 366 sources (2 Excel files + 364 pages)
-- Next: embed documents and build matching pipeline
+- 467 alternative job titles + 1,408 specialisations in index file
+- Composite documents: median 167 words, 87% have task lists, 100% have occupation descriptions
+- Checksum-based update mechanism operational: tracks 366 sources
