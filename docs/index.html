@@ -77,35 +77,54 @@
 
       <!-- Hero waitlist form -->
       <div id="waitlist" class="bg-white rounded-2xl p-6 sm:p-8 shadow-2xl max-w-md mx-auto">
-        <p class="text-brand-800 font-bold text-lg mb-1">Join the waitlist</p>
-        <p class="text-gray-500 text-sm mb-5">Get notified the moment we launch. No spam.</p>
 
-        <form id="form-hero" action="https://api.web3forms.com/submit" method="post" novalidate>
-          <input type="hidden" name="access_key" value="7fdb3ee2-ba92-4fed-bcd8-ecc37e4e39a3" />
-          <input type="hidden" name="subject" value="New ANZSCO Finder waitlist signup" />
-          <input type="hidden" name="from_name" value="ANZSCO Finder Waitlist" />
-          <input type="checkbox" name="botcheck" style="position:absolute;left:-9999px;opacity:0" tabindex="-1" aria-hidden="true" />
+        <!-- Form state -->
+        <div id="form-state-hero">
+          <p class="text-brand-800 font-bold text-lg mb-1">Join the waitlist</p>
+          <p class="text-gray-500 text-sm mb-5">Get notified the moment we launch. No spam.</p>
 
-          <div class="flex flex-col sm:flex-row gap-3">
-            <label for="email-hero" class="sr-only">Your email address</label>
-            <input
-              id="email-hero"
-              type="email"
-              name="email"
-              placeholder="your@email.com"
-              required
-              autocomplete="email"
-              class="flex-1 border border-gray-300 rounded-lg px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-transparent"
-            />
-            <button type="submit" id="btn-hero"
-              class="bg-brand-700 hover:bg-brand-800 text-white font-semibold px-6 py-3 rounded-lg text-sm transition-colors whitespace-nowrap">
-              Get Early Access →
-            </button>
+          <form id="form-hero" action="https://api.web3forms.com/submit" method="post" novalidate>
+            <input type="hidden" name="access_key" value="7fdb3ee2-ba92-4fed-bcd8-ecc37e4e39a3" />
+            <input type="hidden" name="subject" value="New ANZSCO Finder waitlist signup" />
+            <input type="hidden" name="from_name" value="ANZSCO Finder Waitlist" />
+            <input type="checkbox" name="botcheck" style="position:absolute;left:-9999px;opacity:0" tabindex="-1" aria-hidden="true" />
+
+            <div class="flex flex-col sm:flex-row gap-3">
+              <label for="email-hero" class="sr-only">Your email address</label>
+              <input
+                id="email-hero"
+                type="email"
+                name="email"
+                placeholder="your@email.com"
+                required
+                autocomplete="email"
+                class="flex-1 border border-gray-300 rounded-lg px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-transparent"
+              />
+              <button type="submit" id="btn-hero"
+                class="bg-brand-700 hover:bg-brand-800 text-white font-semibold px-6 py-3 rounded-lg text-sm transition-colors whitespace-nowrap">
+                Get Early Access →
+              </button>
+            </div>
+            <div id="msg-hero" role="alert" class="mt-3 text-sm font-medium hidden"></div>
+          </form>
+
+          <p class="text-xs text-gray-400 mt-3">🔒 Your email is safe. We never share your data.</p>
+        </div>
+
+        <!-- Success state — revealed after signup -->
+        <div id="success-hero" class="hidden text-center py-2">
+          <div class="w-12 h-12 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
+            <svg class="w-6 h-6 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" /></svg>
           </div>
-          <div id="msg-hero" role="alert" class="mt-3 text-sm font-medium hidden"></div>
-        </form>
+          <p class="text-gray-900 font-bold text-lg mb-1">You're on the list!</p>
+          <p class="text-gray-500 text-sm mb-5">The tool is live now — try it while you wait for the official launch.</p>
+          <a href="https://anzsco.streamlit.app/" target="_blank" rel="noopener"
+             class="inline-block bg-brand-700 hover:bg-brand-800 text-white font-semibold px-6 py-3 rounded-lg text-sm transition-colors">
+            Find my ANZSCO code →
+          </a>
+          <p class="text-xs text-gray-400 mt-4">We'll also email you when we officially launch.</p>
+        </div>
 
-        <p class="text-xs text-gray-400 mt-3">🔒 Your email is safe. We never share your data.</p>
       </div>
 
     </div>
@@ -271,31 +290,44 @@
         Join the waitlist and be first when we launch. It's free — and it could save you years.
       </p>
 
-      <form id="form-cta" action="https://api.web3forms.com/submit" method="post" novalidate>
-        <input type="hidden" name="access_key" value="7fdb3ee2-ba92-4fed-bcd8-ecc37e4e39a3" />
-        <input type="hidden" name="subject" value="New ANZSCO Finder waitlist signup" />
-        <input type="hidden" name="from_name" value="ANZSCO Finder Waitlist" />
-        <input type="checkbox" name="botcheck" style="position:absolute;left:-9999px;opacity:0" tabindex="-1" aria-hidden="true" />
+      <!-- CTA form state -->
+      <div id="form-state-cta">
+        <form id="form-cta" action="https://api.web3forms.com/submit" method="post" novalidate>
+          <input type="hidden" name="access_key" value="7fdb3ee2-ba92-4fed-bcd8-ecc37e4e39a3" />
+          <input type="hidden" name="subject" value="New ANZSCO Finder waitlist signup" />
+          <input type="hidden" name="from_name" value="ANZSCO Finder Waitlist" />
+          <input type="checkbox" name="botcheck" style="position:absolute;left:-9999px;opacity:0" tabindex="-1" aria-hidden="true" />
 
-        <div class="flex flex-col sm:flex-row gap-3 max-w-sm mx-auto">
-          <label for="email-cta" class="sr-only">Your email address</label>
-          <input
-            id="email-cta"
-            type="email"
-            name="email"
-            placeholder="your@email.com"
-            required
-            autocomplete="email"
-            class="flex-1 border-0 rounded-lg px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-yellow-400 text-gray-900"
-          />
-          <button type="submit" id="btn-cta"
-            class="bg-yellow-400 hover:bg-yellow-300 text-gray-900 font-bold px-6 py-3 rounded-lg text-sm transition-colors whitespace-nowrap">
-            Join Waitlist →
-          </button>
-        </div>
-        <div id="msg-cta" role="alert" class="mt-4 text-sm font-medium hidden"></div>
-      </form>
-      <p class="text-blue-200 text-xs mt-4">No spam. Unsubscribe any time.</p>
+          <div class="flex flex-col sm:flex-row gap-3 max-w-sm mx-auto">
+            <label for="email-cta" class="sr-only">Your email address</label>
+            <input
+              id="email-cta"
+              type="email"
+              name="email"
+              placeholder="your@email.com"
+              required
+              autocomplete="email"
+              class="flex-1 border-0 rounded-lg px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-yellow-400 text-gray-900"
+            />
+            <button type="submit" id="btn-cta"
+              class="bg-yellow-400 hover:bg-yellow-300 text-gray-900 font-bold px-6 py-3 rounded-lg text-sm transition-colors whitespace-nowrap">
+              Join Waitlist →
+            </button>
+          </div>
+          <div id="msg-cta" role="alert" class="mt-4 text-sm font-medium hidden"></div>
+        </form>
+        <p class="text-blue-200 text-xs mt-4">No spam. Unsubscribe any time.</p>
+      </div>
+
+      <!-- CTA success state -->
+      <div id="success-cta" class="hidden">
+        <p class="text-white font-bold text-xl mb-2">✓ You're on the list!</p>
+        <p class="text-blue-100 text-sm mb-6">The tool is live right now — don't wait.</p>
+        <a href="https://anzsco.streamlit.app/" target="_blank" rel="noopener"
+           class="inline-block bg-yellow-400 hover:bg-yellow-300 text-gray-900 font-bold px-6 py-3 rounded-lg text-sm transition-colors">
+          Find my ANZSCO code →
+        </a>
+      </div>
     </div>
   </section>
 
@@ -349,10 +381,10 @@
           const data = await res.json();
 
           if (data.success) {
-            msg.textContent = "You're on the list — we'll be in touch soon. Thank you!";
-            msg.className = 'mt-3 text-sm font-semibold text-green-600';
-            form.reset();
-            btn.textContent = '✓ Done';
+            const formStateId = id === 'form-hero' ? 'form-state-hero' : 'form-state-cta';
+            const successId   = id === 'form-hero' ? 'success-hero'    : 'success-cta';
+            document.getElementById(formStateId).classList.add('hidden');
+            document.getElementById(successId).classList.remove('hidden');
           } else {
             throw new Error(data.message || 'Submission failed');
           }

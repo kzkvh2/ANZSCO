@@ -70,23 +70,79 @@ _Last updated: 2026-05-07_
 
 ---
 
-## Strategic Backlog / Known Issues
+---
 
-### Critical (before scaling traffic)
-- **No analytics**: Don't know if anyone is using the app, what accuracy looks like in production
-- **No feedback mechanism**: No way for users to signal whether results were helpful or wrong
-- **Disconnected products**: Landing page (waitlist) and app are not linked. Users who sign up don't get app access. App is public but unadvertised.
-- **Cold start UX**: ~1 min first load on Streamlit Cloud after inactivity. Users will think it's broken.
-- **Acceptance test validity**: 10 synthetic CVs written by us. Not a real-world accuracy benchmark.
+## Roadmap & Strategy
 
-### Matching Quality
-- **Seniority & tenure not considered**: A candidate with 20 years IT management experience may match ICT Support Technician (junior code). Profile extraction captures seniority but re-ranker doesn't use it. Fix: add seniority/skill-level signal to re-rank prompt.
+### Where we are
+Two live products (landing page + Streamlit demo) with a working matching engine (100% top-5 / 80% top-1 on synthetic test cases). Waitlist collecting emails. No real users validated. No funnel between the two products. Tool is publicly accessible but not advertised.
 
-### Product/Strategic
-- **Monetisation path undefined**: Tool is free and unlinked. No freemium gate, no conversion funnel.
-- **Mobile UX**: Streamlit is desktop-first. Target audience (Indian, Filipino, Nepali applicants) is mobile-heavy.
-- **Streamlit is not a long-term platform**: Generic look, no custom branding, poor mobile, no session persistence.
-- **Real user validation needed**: 10 real users with real CVs, not synthetic test cases.
+### Where we want to be (6 months)
+A validated, monetisable product with real user accuracy data, a growing organic user base, and a clear conversion path from free → paid. The Streamlit demo is replaced by a purpose-built, mobile-friendly web app.
+
+### How we get there
+
+| # | Initiative | Type | Priority | Impact | Effort | Timeline | Cost | Dependencies |
+|---|---|---|---|---|---|---|---|---|
+| 1 | **Funnel fix** — show app link after signup | GTM | 🔴 Critical | High | Done | ✅ Done | Free | — |
+| 2 | **Real user test** — 10 real CVs from real people | Validation | 🔴 Critical | High | Low | This week | Free | App live |
+| 3 | **Feedback button** — thumbs up/down on results | Product | 🔴 Critical | High | Low | This week | Free | App live |
+| 4 | **Cold start UX** — explain the ~1 min wait | Product | 🟠 High | Med | Low | This week | Free | — |
+| 5 | **Outreach phase 1** — Reddit/Whirlpool/Facebook seeding | GTM | 🟠 High | High | Med | This week | Free | Funnel fix |
+| 6 | **Testimonials** — 2–3 real users, quote + occupation | GTM | 🟠 High | High | Low | 2 weeks | Free | Real users |
+| 7 | **SEO content** — blog/FAQ targeting "ANZSCO code for [job]" | GTM | 🟠 High | High | Med | 2–4 weeks | Free | Landing page |
+| 8 | **Email nurture** — 2-step sequence for waitlist | GTM | 🟠 High | Med | Low | 2 weeks | Free | Email tool |
+| 9 | **Seniority fix** — add experience-level signal to re-ranker | Tech | 🟡 Medium | Med | Med | 1 month | Free | — |
+| 10 | **Freemium gate** — email required after 3 free uses | Product | 🟡 Medium | High | High | 1 month | Free | Auth/session |
+| 11 | **Analytics** — usage tracking, accuracy in production | Tech | 🟡 Medium | Med | Low | 1 month | Free | — |
+| 12 | **Purpose-built web app** — replace Streamlit (mobile-first) | Tech | 🟡 Medium | High | High | 2–3 months | Low | Funding/time |
+| 13 | **B2B pitch** — migration agents, RTOs, education providers | GTM | 🟡 Medium | Very High | High | 2–3 months | Low | Validation |
+| 14 | **PDF report output** — downloadable results | Product | 🟢 Low | Med | Med | 3+ months | Free | — |
+| 15 | **API** — for integration with agent platforms | Tech | 🟢 Low | High | High | 6+ months | — | B2B validated |
+| 16 | **Visa pathway overlay** — which visa each code qualifies for | Product | 🟢 Low | High | High | 6+ months | — | Legal review |
+
+### Strategic decisions to make (not yet decided)
+- **Monetisation model**: Freemium individual (3 free → paid) vs B2B (sell to agents/RTOs) vs both. B2B has higher ACV and no payment friction for individual migrants; but longer sales cycle.
+- **Platform**: Streamlit → purpose-built Next.js/FastAPI app. Trigger: when you have validated users and are ready to invest in product.
+- **Email infrastructure**: Web3Forms is fine for the waitlist. Need Brevo/Mailchimp free tier for nurture sequences (Web3Forms doesn't send to submitters).
+
+### Outreach plan (Phase 1 — this week)
+Target: grow waitlist to 100 signups. All organic, free, no ads.
+
+**Where to post:**
+| Channel | Specific targets | Message angle |
+|---|---|---|
+| Reddit | r/AusVisa, r/australia, r/ImmigrationAustralia | Answer existing ANZSCO questions, link tool |
+| Whirlpool.net.au | Visa & immigration forum | Same approach — answer first, share link |
+| Facebook groups | "Australia PR/Visa", "Indians in Australia", "Filipinos in Australia" | Post as helpful resource, not an ad |
+| LinkedIn | Personal post as founder | "I built this because..." story format |
+| YouTube | Comments on ANZSCO explainer videos | Answer question, mention free tool |
+
+**Rules for every post:**
+1. Answer the question genuinely first. Add the link second.
+2. Never post the same message twice (spam filters + community bans)
+3. Disclose you built it when sharing
+4. Target posts where someone is actively confused about their ANZSCO code
+
+**Message template (adapt per channel):**
+> "Finding your ANZSCO code is genuinely confusing — there are 1,076 of them and the descriptions are written in bureaucratic language. I built a free tool that reads your CV and matches it to the right code. Early days but it's worked well so far: [link]. No account, no cost."
+
+---
+
+## Known Issues / Backlog
+
+| Issue | Severity | Fix |
+|---|---|---|
+| Seniority/tenure ignored in matching | High | Add experience-level signal to re-rank prompt |
+| Acceptance test uses synthetic CVs only | High | Run 10 real user CVs, update pass/fail criteria |
+| No user feedback mechanism | High | Add thumbs up/down to Streamlit app |
+| Cold start ~1 min on Streamlit Cloud | High | Explain in UI; long-term: replace platform |
+| No production accuracy data | High | Add logging; review first 20 real runs |
+| No email nurture sequence | Med | Set up Brevo free tier, 2-email sequence |
+| Mobile UX poor on Streamlit | Med | Long-term: replace with purpose-built app |
+| No usage analytics | Med | Add basic logging or Streamlit analytics |
+| Streamlit is not a long-term platform | Med | Plan Next.js/FastAPI app for v2 |
+| No monetisation gate | Low (now) | Freemium after validation |
 
 ---
 
