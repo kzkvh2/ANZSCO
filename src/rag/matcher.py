@@ -20,7 +20,7 @@ import numpy as np
 import anthropic
 from sentence_transformers import SentenceTransformer
 
-from src.rag.embedder import load_embeddings, embed_query, MODEL_NAME
+from src.rag.embedder import build_embeddings, embed_query, MODEL_NAME
 
 MODEL_EXTRACT = 'claude-sonnet-4-6'   # profile extraction — needs reasoning quality
 MODEL_RERANK  = 'claude-haiku-4-5-20251001'  # re-ranking — classification task, speed matters
@@ -39,8 +39,14 @@ def _get_st_model() -> SentenceTransformer:
 def _get_index() -> tuple[np.ndarray, list[dict]]:
     global _embeddings, _metadata
     if _embeddings is None:
-        _embeddings, _metadata = load_embeddings()
+        _embeddings, _metadata = build_embeddings()
     return _embeddings, _metadata
+
+
+def preload() -> None:
+    """Warm the module-level model and index cache. Call once at app startup."""
+    _get_st_model()
+    _get_index()
 
 
 def _claude_client() -> anthropic.Anthropic:

@@ -12,7 +12,14 @@ sys.path.insert(0, str(pathlib.Path(__file__).parent.parent))
 
 import streamlit as st
 from src.rag.cv_parser import extract_text, parsability_score
-from src.rag.matcher import match_cv
+from src.rag.matcher import match_cv, preload
+
+
+@st.cache_resource(show_spinner="Loading ANZSCO knowledge base — first launch takes ~1 min...")
+def _preload():
+    preload()
+
+_preload()
 
 # ---------------------------------------------------------------------------
 # Assessing body lookup — keyed on ANZSCO major group prefix

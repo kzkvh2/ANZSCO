@@ -1,0 +1,7 @@
+anthropic>=0.50.0
+streamlit>=1.30.0
+sentence-transformers>=2.0.0
+pdfminer.six>=20220524
+python-docx>=0.8.0
+textstat>=0.7.0
+numpy>=1.24.0
