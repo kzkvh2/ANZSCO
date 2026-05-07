@@ -21,39 +21,6 @@ def _preload():
 
 _preload()
 
-# ---------------------------------------------------------------------------
-# Assessing body lookup — keyed on ANZSCO major group prefix
-# Used to generate the "What next?" one-liner per result
-# ---------------------------------------------------------------------------
-ASSESSING_BODY = {
-    '1': ('VETASSESS', 'https://www.vetassess.com.au'),                    # Managers
-    '21': ('VETASSESS', 'https://www.vetassess.com.au'),                   # Arts/Social science professionals
-    '22': ('VETASSESS', 'https://www.vetassess.com.au'),                   # Business professionals
-    '223': ('VETASSESS', 'https://www.vetassess.com.au'),                  # HR/Marketing
-    '232': ('VETASSESS', 'https://www.vetassess.com.au'),                  # Design/Architecture
-    '241': ('AITSL', 'https://www.aitsl.edu.au'),                          # School teachers
-    '242': ('AITSL', 'https://www.aitsl.edu.au'),                          # Early childhood teachers
-    '25': ('AHPRA', 'https://www.ahpra.gov.au'),                           # Health professionals (nurses, midwives, etc.)
-    '26': ('ACS', 'https://www.acs.org.au/msa'),                           # ICT professionals
-    '27': ('Engineers Australia', 'https://www.engineersaustralia.org.au/skills-assessment'),  # Engineers (code 27x)
-    '233': ('Engineers Australia', 'https://www.engineersaustralia.org.au/skills-assessment'), # Engineers
-    '234': ('Engineers Australia', 'https://www.engineersaustralia.org.au/skills-assessment'), # Science & building professionals
-    '3': ('TRA', 'https://www.tradesrecognitionaustralia.gov.au'),          # Technicians & trades
-    '4': ('VETASSESS', 'https://www.vetassess.com.au'),                    # Community & personal service
-    '5': ('VETASSESS', 'https://www.vetassess.com.au'),                    # Clerical & admin
-    '6': ('VETASSESS', 'https://www.vetassess.com.au'),                    # Sales workers
-    '7': ('TRA', 'https://www.tradesrecognitionaustralia.gov.au'),         # Machinery operators
-    '8': ('VETASSESS', 'https://www.vetassess.com.au'),                    # Labourers
-}
-
-def get_assessing_body(code: str) -> tuple[str, str] | None:
-    """Return (body_name, url) for a 6-digit ANZSCO code, longest-prefix match."""
-    for prefix in ('242', '241', '234', '233', '232', '27', '26', '25', '23', '22', '21',
-                   '1', '3', '4', '5', '6', '7', '8'):
-        if code.startswith(prefix):
-            return ASSESSING_BODY.get(prefix)
-    return None
-
 
 # ---------------------------------------------------------------------------
 # Page config
@@ -145,19 +112,12 @@ if uploaded:
         for i, match in enumerate(result['results'], 1):
             conf_icon = CONFIDENCE_COLOUR.get(match.get('confidence', 'low'), '🔴')
             score_bar = '█' * (match['match_score'] // 10) + '░' * (10 - match['match_score'] // 10)
-            body_info = get_assessing_body(match['code'])
 
             with st.container(border=True):
                 c1, c2 = st.columns([3, 1])
                 with c1:
                     st.markdown(f'**#{i} — {match["code"]} {match["title"]}**')
                     st.caption(match.get('explanation', ''))
-                    if body_info:
-                        body_name, body_url = body_info
-                        st.markdown(
-                            f'**What next?** Skills assessment via [{body_name}]({body_url})',
-                            help='This is the typical assessing body for this occupation. Confirm on the Home Affairs website before applying.'
-                        )
                 with c2:
                     st.markdown(f'**{match["match_score"]}/100** {conf_icon}')
                     st.caption(f'`{score_bar}`')
@@ -171,8 +131,8 @@ if uploaded:
         )
 
         st.warning(
-            'These codes are a guide only. Verify your code with the relevant assessing body '
-            'and the [Home Affairs occupation list](https://immi.homeaffairs.gov.au/visas/working-in-australia/skill-occupation-list) '
+            'These codes are a guide only. Verify your final selection against the '
+            '[Home Affairs skilled occupation list](https://immi.homeaffairs.gov.au/visas/working-in-australia/skill-occupation-list) '
             'before submitting a visa application.',
             icon='⚠️',
         )
