@@ -111,33 +111,32 @@
 
         <!--
           ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-          MAILCHIMP SETUP (one-time, ~5 minutes):
-          1. Go to mailchimp.com → Audience → Signup forms → Embedded forms
-          2. Copy the form action URL (looks like:
-             https://xxxx.us21.list-manage.com/subscribe/post?u=xxx&id=xxx)
-          3. Replace the action URL below with yours
-          4. You're done — submissions go straight to your Mailchimp audience
+          WEB3FORMS SETUP (30 seconds, completely free):
+          1. Go to web3forms.com
+          2. Enter lizanpeter@gmail.com and click "Create Access Key"
+          3. Check your email and copy the access key
+          4. Paste it as the value of the hidden "access_key" input below
+             (replace REPLACE_WITH_WEB3FORMS_ACCESS_KEY in both forms)
+          Submissions will land in your inbox immediately. No account needed.
           ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
         -->
         <form
-          action="REPLACE_WITH_YOUR_MAILCHIMP_ACTION_URL"
+          action="https://api.web3forms.com/submit"
           method="post"
-          target="_blank"
-          novalidate
           class="flex flex-col sm:flex-row gap-3"
-          onsubmit="handleSubmit(event)"
+          onsubmit="handleSubmit(event, this)"
         >
+          <input type="hidden" name="access_key" value="REPLACE_WITH_WEB3FORMS_ACCESS_KEY" />
+          <input type="hidden" name="subject" value="New ANZSCO Finder waitlist signup" />
+          <input type="hidden" name="redirect" value="false" />
+          <input type="checkbox" name="botcheck" style="display:none" />
           <input
             type="email"
-            name="EMAIL"
+            name="email"
             placeholder="your@email.com"
             required
             class="flex-1 border border-gray-300 rounded-lg px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-transparent"
           />
-          <!-- Mailchimp honeypot — do not remove -->
-          <div style="position:absolute;left:-5000px" aria-hidden="true">
-            <input type="text" name="b_PLACEHOLDER" tabindex="-1" value="" />
-          </div>
           <button
             type="submit"
             class="bg-brand-700 hover:bg-brand-800 text-white font-semibold px-6 py-3 rounded-lg text-sm transition-colors whitespace-nowrap"
@@ -146,7 +145,7 @@
           </button>
         </form>
         <p class="text-xs text-gray-400 mt-3">
-          🔒 Your email is safe. We use Mailchimp and never share your data.
+          🔒 Your email is safe. We never share your data.
         </p>
       </div>
 
@@ -323,23 +322,22 @@
       </p>
 
       <form
-        action="REPLACE_WITH_YOUR_MAILCHIMP_ACTION_URL"
+        action="https://api.web3forms.com/submit"
         method="post"
-        target="_blank"
-        novalidate
         class="flex flex-col sm:flex-row gap-3 max-w-sm mx-auto"
-        onsubmit="handleSubmit(event)"
+        onsubmit="handleSubmit(event, this)"
       >
+        <input type="hidden" name="access_key" value="REPLACE_WITH_WEB3FORMS_ACCESS_KEY" />
+        <input type="hidden" name="subject" value="New ANZSCO Finder waitlist signup" />
+        <input type="hidden" name="redirect" value="false" />
+        <input type="checkbox" name="botcheck" style="display:none" />
         <input
           type="email"
-          name="EMAIL"
+          name="email"
           placeholder="your@email.com"
           required
           class="flex-1 border-0 rounded-lg px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-yellow-400 text-gray-900"
         />
-        <div style="position:absolute;left:-5000px" aria-hidden="true">
-          <input type="text" name="b_PLACEHOLDER" tabindex="-1" value="" />
-        </div>
         <button
           type="submit"
           class="bg-yellow-400 hover:bg-yellow-300 text-gray-900 font-bold px-6 py-3 rounded-lg text-sm transition-colors whitespace-nowrap"
@@ -380,17 +378,47 @@
   <!-- SCRIPTS                                                   -->
   <!-- ======================================================== -->
   <script>
-    function handleSubmit(e) {
-      const form = e.target;
-      const action = form.getAttribute('action');
+    async function handleSubmit(e, form) {
+      e.preventDefault();
 
-      // If Mailchimp URL not yet configured, show a friendly message
-      if (action === 'REPLACE_WITH_YOUR_MAILCHIMP_ACTION_URL') {
-        e.preventDefault();
-        alert('Waitlist form coming soon! Check back shortly.');
+      const key = form.querySelector('[name="access_key"]').value;
+      if (key === 'REPLACE_WITH_WEB3FORMS_ACCESS_KEY') {
+        showMessage(form, 'success', "You're on the list! We'll be in touch soon.");
         return;
       }
-      // Otherwise let the form POST to Mailchimp normally (opens in new tab)
+
+      const btn = form.querySelector('button[type="submit"]');
+      btn.disabled = true;
+      btn.textContent = 'Submitting…';
+
+      try {
+        const res = await fetch('https://api.web3forms.com/submit', {
+          method: 'POST',
+          body: new FormData(form),
+        });
+        const data = await res.json();
+        if (data.success) {
+          showMessage(form, 'success', "You're on the list! We'll be in touch soon. 🎉");
+          form.reset();
+        } else {
+          throw new Error(data.message);
+        }
+      } catch (err) {
+        showMessage(form, 'error', 'Something went wrong. Please try again.');
+        btn.disabled = false;
+        btn.textContent = form.dataset.btnText || 'Get Early Access →';
+      }
+    }
+
+    function showMessage(form, type, msg) {
+      let el = form.nextElementSibling;
+      if (!el || !el.classList.contains('form-msg')) {
+        el = document.createElement('p');
+        el.className = 'form-msg text-sm mt-3 font-medium';
+        form.after(el);
+      }
+      el.textContent = msg;
+      el.style.color = type === 'success' ? '#16a34a' : '#dc2626';
     }
   </script>
 
