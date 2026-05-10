@@ -1,138 +1,68 @@
 """
 Live job search for a given occupation title.
 
-Sources:
-  - SEEK   : parseforge/seek-scraper Apify actor        (~4s)
-  - LinkedIn: curious_coder/linkedin-jobs-scraper        (~44s)
-  - Indeed  : misceres/indeed-scraper Apify actor        (~21s)
+Source: Adzuna Jobs API (https://developer.adzuna.com/)
+  - Free tier: 1,000 requests/month
+  - Single call replaces the previous SEEK + LinkedIn + Indeed Apify scrapers
+  - Response time: ~1-2 seconds
 
-Requires env var: APIFY_TOKEN
+Requires env vars: ADZUNA_APP_ID, ADZUNA_APP_KEY
 """
 
-import concurrent.futures
 import os
 import urllib.parse
 import requests
 
 
-def _apify_token() -> str:
-    return os.environ.get('APIFY_TOKEN', '')
-
-
-def _run_actor_sync(actor: str, payload: dict, timeout_secs: int = 120) -> list[dict]:
-    token = _apify_token()
-    if not token:
+def fetch_adzuna_jobs(title: str, n: int = 6) -> list[dict]:
+    app_id  = os.environ.get('ADZUNA_APP_ID', '')
+    app_key = os.environ.get('ADZUNA_APP_KEY', '')
+    if not app_id or not app_key:
         return []
-    url = f'https://api.apify.com/v2/acts/{actor}/run-sync-get-dataset-items'
     try:
-        r = requests.post(
-            url,
-            json=payload,
-            params={'token': token, 'waitForFinish': timeout_secs},
-            timeout=timeout_secs + 15,
+        r = requests.get(
+            'https://api.adzuna.com/v1/api/jobs/au/search/1',
+            params={
+                'app_id': app_id,
+                'app_key': app_key,
+                'results_per_page': n,
+                'what': title,
+                'where': 'Australia',
+                'content-type': 'application/json',
+            },
+            timeout=10,
         )
-        if r.ok:
-            return r.json() or []
+        if not r.ok:
+            return []
+        items = r.json().get('results', [])
+        results = []
+        for j in items[:n]:
+            url = j.get('redirect_url', '')
+            if not url:
+                continue
+            sal_min = j.get('salary_min')
+            sal_max = j.get('salary_max')
+            if sal_min and sal_max:
+                salary = f'${sal_min:,.0f}–${sal_max:,.0f}'
+            elif sal_min:
+                salary = f'${sal_min:,.0f}+'
+            else:
+                salary = ''
+            results.append({
+                'title':    j.get('title', ''),
+                'company':  j.get('company', {}).get('display_name', ''),
+                'location': j.get('location', {}).get('display_name', ''),
+                'url':      url,
+                'salary':   salary,
+            })
+        return results
     except Exception:
-        pass
-    return []
+        return []
 
 
-def fetch_seek_jobs(title: str, n: int = 3) -> list[dict]:
-    items = _run_actor_sync(
-        'parseforge~seek-scraper',
-        {'keywords': title, 'maxItems': n},
-        timeout_secs=30,
-    )
-    return [
-        {
-            'title': j.get('title', ''),
-            'company': j.get('companyName', ''),
-            'location': j.get('location', ''),
-            'url': j.get('url', ''),
-            'salary': j.get('salaryLabel', ''),
-            'source': 'SEEK',
-        }
-        for j in items[:n]
-        if j.get('url')
-    ]
-
-
-def fetch_linkedin_jobs(title: str, n: int = 3) -> list[dict]:
-    search_url = (
-        'https://www.linkedin.com/jobs/search/'
-        f'?keywords={urllib.parse.quote_plus(title)}'
-        '&location=Australia&f_TPR=r604800'
-    )
-    items = _run_actor_sync(
-        'curious_coder~linkedin-jobs-scraper',
-        {'urls': [search_url], 'maxJobListings': n},
-        timeout_secs=120,
-    )
-    return [
-        {
-            'title': j.get('title', ''),
-            'company': j.get('companyName', ''),
-            'location': j.get('location', ''),
-            'url': j.get('link', ''),
-            'salary': '',
-            'source': 'LinkedIn',
-        }
-        for j in items[:n]
-        if j.get('link')
-    ]
-
-
-def fetch_indeed_jobs(title: str, n: int = 3) -> list[dict]:
-    items = _run_actor_sync(
-        'misceres~indeed-scraper',
-        {'position': title, 'country': 'Australia', 'maxItems': n},
-        timeout_secs=60,
-    )
-    results = []
-    for j in items[:n]:
-        url = j.get('externalApplyLink') or j.get('url', '')
-        if not url:
-            continue
-        results.append({
-            'title': j.get('positionName', ''),
-            'company': j.get('company', ''),
-            'location': j.get('location', ''),
-            'url': url,
-            'salary': j.get('salary', ''),
-            'source': 'Indeed',
-        })
-    return results
-
-
-def fetch_all_jobs(title: str, n: int = 3) -> dict:
-    """Run SEEK, LinkedIn, and Indeed in parallel."""
-    with concurrent.futures.ThreadPoolExecutor(max_workers=3) as ex:
-        seek_f   = ex.submit(fetch_seek_jobs, title, n)
-        li_f     = ex.submit(fetch_linkedin_jobs, title, n)
-        indeed_f = ex.submit(fetch_indeed_jobs, title, n)
-    return {
-        'seek':    seek_f.result(),
-        'linkedin': li_f.result(),
-        'indeed':  indeed_f.result(),
-    }
-
-
-def fetch_jobs_for_codes(titles_by_code: dict[str, str], n: int = 3) -> dict[str, dict]:
-    """
-    Fetch jobs for multiple ANZSCO codes.
-
-    Occupations are fetched sequentially to stay within Apify's free-tier
-    concurrency limit (3 actors at once). Within each occupation, SEEK,
-    LinkedIn, and Indeed run in parallel via fetch_all_jobs.
-
-    Returns:
-        {code: {'seek': [...], 'linkedin': [...], 'indeed': [...]}, ...}
-    """
-    results: dict[str, dict] = {}
-    for code, title in titles_by_code.items():
-        results[code] = fetch_all_jobs(title, n)
-    return results
+def fetch_jobs_for_codes(titles_by_code: dict[str, str], n: int = 6) -> dict[str, list]:
+    """Fetch Adzuna jobs for multiple ANZSCO codes. Returns {code: [job, ...]}."""
+    return {code: fetch_adzuna_jobs(title, n) for code, title in titles_by_code.items()}
 
 
 def seek_search_url(title: str) -> str:

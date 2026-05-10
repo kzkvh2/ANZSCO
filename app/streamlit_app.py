@@ -15,15 +15,17 @@ import requests
 import streamlit as st
 from src.rag.cv_parser import extract_text, parsability_score
 from src.rag.matcher import match_cv, preload
-from src.jobs import fetch_jobs_for_codes, seek_search_url, indeed_search_url, linkedin_search_url
+from src.jobs import fetch_adzuna_jobs, fetch_jobs_for_codes, seek_search_url, indeed_search_url, linkedin_search_url
 
 BREVO_API_KEY  = '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'
 FEEDBACK_EMAIL = 'lizanpeter@gmail.com'
 
-# Wire Apify token from Streamlit secrets into env so src/jobs.py can read it.
+# Wire Adzuna credentials from Streamlit secrets into env so src/jobs.py can read them.
 try:
-    if 'APIFY_TOKEN' in st.secrets:
-        os.environ['APIFY_TOKEN'] = st.secrets['APIFY_TOKEN']
+    if 'ADZUNA_APP_ID' in st.secrets:
+        os.environ['ADZUNA_APP_ID'] = st.secrets['ADZUNA_APP_ID']
+    if 'ADZUNA_APP_KEY' in st.secrets:
+        os.environ['ADZUNA_APP_KEY'] = st.secrets['ADZUNA_APP_KEY']
 except Exception:
     pass
 
@@ -85,55 +87,35 @@ def _score_label(score: int) -> str:
     return 'Partial match'
 
 
-def _render_jobs(jobs: dict, title: str) -> None:
-    seek_jobs   = jobs.get('seek', [])
-    li_jobs     = jobs.get('linkedin', [])
-    indeed_jobs = jobs.get('indeed', [])
+def _render_jobs(jobs: list[dict], title: str) -> None:
+    if not jobs:
+        st.markdown(
+            f'No live listings found. Search directly: '
+            f'[SEEK]({seek_search_url(title)}) · '
+            f'[LinkedIn]({linkedin_search_url(title)}) · '
+            f'[Indeed]({indeed_search_url(title)})'
+        )
+        return
 
-    col_seek, col_li, col_indeed = st.columns(3)
+    col_a, col_b = st.columns(2)
+    for idx, j in enumerate(jobs):
+        col = col_a if idx % 2 == 0 else col_b
+        with col:
+            st.markdown(
+                f'[{j["title"]}]({j["url"]})\n\n'
+                f'<small>{j["company"]} · {j["location"]}'
+                + (f' · {j["salary"]}' if j.get('salary') else '')
+                + '</small>',
+                unsafe_allow_html=True,
+            )
+            st.write('')
 
-    with col_seek:
-        st.markdown('**SEEK**')
-        if seek_jobs:
-            for j in seek_jobs:
-                st.markdown(
-                    f'[{j["title"]}]({j["url"]})\n\n'
-                    f'<small>{j["company"]} · {j["location"]}'
-                    + (f' · {j["salary"]}' if j.get('salary') else '')
-                    + '</small>',
-                    unsafe_allow_html=True,
-                )
-                st.write('')
-        else:
-            st.markdown(f'[Search all SEEK listings →]({seek_search_url(title)})')
-
-    with col_li:
-        st.markdown('**LinkedIn**')
-        if li_jobs:
-            for j in li_jobs:
-                st.markdown(
-                    f'[{j["title"]}]({j["url"]})\n\n'
-                    f'<small>{j["company"]} · {j["location"]}</small>',
-                    unsafe_allow_html=True,
-                )
-                st.write('')
-        else:
-            st.markdown(f'[Search all LinkedIn listings →]({linkedin_search_url(title)})')
-
-    with col_indeed:
-        st.markdown('**Indeed**')
-        if indeed_jobs:
-            for j in indeed_jobs:
-                st.markdown(
-                    f'[{j["title"]}]({j["url"]})\n\n'
-                    f'<small>{j["company"]} · {j["location"]}'
-                    + (f' · {j["salary"]}' if j.get('salary') else '')
-                    + '</small>',
-                    unsafe_allow_html=True,
-                )
-                st.write('')
-        else:
-            st.markdown(f'[Search all Indeed listings →]({indeed_search_url(title)})')
+    st.markdown(
+        f'<small>Search more: [SEEK]({seek_search_url(title)}) · '
+        f'[LinkedIn]({linkedin_search_url(title)}) · '
+        f'[Indeed]({indeed_search_url(title)})</small>',
+        unsafe_allow_html=True,
+    )
 
 
 def _send_feedback(thumbs_up: bool, results: list[dict]) -> bool:
@@ -392,33 +374,31 @@ if qualifying:
     person = f"{first_name}'s" if first_name else 'Your'
     st.subheader(f'Live job listings — {person} top matches')
     n_occ = len(qualifying)
-    est   = '~45 seconds' if n_occ == 1 else '~90 seconds'
     st.caption(
-        f'Showing your top {n_occ} occupation{"s" if n_occ > 1 else ""}. '
-        f'Searches SEEK, LinkedIn, and Indeed — {est}. '
-        'If a job board returns no results, a direct search link is shown instead.'
+        f'Showing your top {n_occ} occupation{"s" if n_occ > 1 else ""} — '
+        'powered by Adzuna, aggregating SEEK, Indeed, and other Australian boards.'
     )
 
     jobs_key = 'jobs_' + '_'.join(m['code'] for m in qualifying)
 
     if jobs_key not in st.session_state:
-        with st.spinner(f'Searching live jobs — {est}. Results will appear below...'):
-            if not os.environ.get('APIFY_TOKEN'):
-                st.session_state[jobs_key] = {m['code']: {} for m in qualifying}
+        with st.spinner('Fetching live job listings...'):
+            if not (os.environ.get('ADZUNA_APP_ID') and os.environ.get('ADZUNA_APP_KEY')):
+                st.session_state[jobs_key] = {m['code']: [] for m in qualifying}
             else:
                 try:
                     titles_by_code = {m['code']: m['title'] for m in qualifying}
-                    st.session_state[jobs_key] = fetch_jobs_for_codes(titles_by_code, n=3)
+                    st.session_state[jobs_key] = fetch_jobs_for_codes(titles_by_code, n=6)
                 except Exception:
-                    st.session_state[jobs_key] = {m['code']: {} for m in qualifying}
+                    st.session_state[jobs_key] = {m['code']: [] for m in qualifying}
         st.rerun()
     else:
         all_jobs = st.session_state[jobs_key]
         if len(qualifying) == 1:
             m = qualifying[0]
-            _render_jobs(all_jobs.get(m['code'], {}), m['title'])
+            _render_jobs(all_jobs.get(m['code'], []), m['title'])
         else:
             tabs = st.tabs([f'{m["code"]} {m["title"]}' for m in qualifying])
             for tab, m in zip(tabs, qualifying):
                 with tab:
-                    _render_jobs(all_jobs.get(m['code'], {}), m['title'])
+                    _render_jobs(all_jobs.get(m['code'], []), m['title'])
