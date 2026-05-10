@@ -23,7 +23,7 @@ from sentence_transformers import SentenceTransformer
 from src.rag.embedder import build_embeddings, embed_query, MODEL_NAME
 
 MODEL_EXTRACT = 'claude-haiku-4-5-20251001'  # structured extraction — Haiku is accurate and ~4x cheaper than Sonnet
-MODEL_RERANK  = 'claude-haiku-4-5-20251001'  # re-ranking — classification task, speed matters
+MODEL_RERANK  = 'claude-sonnet-4-6'           # re-ranking — nuanced judgment task, Sonnet gives better discrimination
 _st_model: SentenceTransformer | None = None
 _embeddings: np.ndarray | None = None
 _metadata: list[dict] | None = None
@@ -175,20 +175,29 @@ def retrieve_candidates(query_text: str, top_k: int = 20) -> list[dict]:
 # ---------------------------------------------------------------------------
 
 RERANK_SYSTEM = """You are an ANZSCO occupation classification expert.
-Your job is to select the 5 best-matching ANZSCO occupation codes for a given candidate profile.
+Your job is to identify the best-matching ANZSCO occupation codes for a given candidate profile.
 
 STRICT RULES:
 - Use ONLY codes and titles from the provided candidate list. Never invent codes or titles.
 - Copy the "code" and "title" fields EXACTLY as they appear in the candidate list.
 
-For each of your top 5 selections return:
+Score each match using this calibrated scale:
+  90–100: Near-perfect — the candidate has performed this exact work under this occupation title
+  70–89: Strong — core duties and skills substantially overlap
+  50–69: Partial — some relevant experience but notable gaps in fit
+  Below 50: Weak — do NOT include these in your response
+
+Return between 1 and 5 results. Include ONLY codes scoring 55 or above.
+If fewer than 5 candidates reach that threshold, return only the ones that do — quality over quantity.
+
+For each result return:
 - code: the 6-digit ANZSCO code (copy exactly from candidate list)
-- title: the occupation title (copy exactly from candidate list — do NOT paraphrase or substitute)
-- match_score: integer 0-100 (how well this code fits this person)
-- explanation: one sentence explaining why this code fits, referencing specific duties or skills from the CV
+- title: the occupation title (copy exactly — do NOT paraphrase or substitute)
+- match_score: integer 0–100 using the calibrated scale above
+- explanation: one sentence referencing specific duties or skills from the CV that justify this score
 - confidence: "high" | "medium" | "low"
 
-Return ONLY a JSON array of 5 objects. No other text."""
+Return ONLY a JSON array. No other text."""
 
 def rerank_with_claude(profile: dict, candidates: list[dict],
                        client: anthropic.Anthropic) -> list[dict]:
@@ -262,6 +271,9 @@ def match_cv(raw_cv_text: str, top_k_candidates: int = 20) -> dict:
     t0 = time.perf_counter()
     results = rerank_with_claude(profile, candidates, client)
     timings['rerank_ms'] = int((time.perf_counter() - t0) * 1000)
+
+    # Safety net: drop anything below threshold in case the model ignored the instruction
+    results = [r for r in results if r.get('match_score', 0) >= 55]
 
     timings['total_ms'] = sum(timings.values())
 
