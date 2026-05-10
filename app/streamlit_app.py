@@ -3,7 +3,7 @@ ANZSCO Code Finder — Demo App
 Upload a CV (PDF or Word) and get top ANZSCO matches.
 
 Run:
-  cd ~/projects/mate1
+  cd ~/projects/anzsco
   ANTHROPIC_API_KEY=sk-ant-... .venv/bin/streamlit run app/streamlit_app.py
 """
 
@@ -11,7 +11,6 @@ import sys, pathlib, hashlib
 sys.path.insert(0, str(pathlib.Path(__file__).parent.parent))
 
 import os
-import urllib.parse
 import requests
 import streamlit as st
 from src.rag.cv_parser import extract_text, parsability_score
@@ -27,6 +26,57 @@ try:
         os.environ['APIFY_TOKEN'] = st.secrets['APIFY_TOKEN']
 except Exception:
     pass
+
+# ---------------------------------------------------------------------------
+# Assessing body mapping — keyed by first 4 digits of ANZSCO code
+# ---------------------------------------------------------------------------
+ASSESSING_BODIES = {
+    '2611': ('Australian Computer Society (ACS)', 'https://www.acs.org.au/msa.html'),
+    '2612': ('Australian Computer Society (ACS)', 'https://www.acs.org.au/msa.html'),
+    '2613': ('Australian Computer Society (ACS)', 'https://www.acs.org.au/msa.html'),
+    '2614': ('Australian Computer Society (ACS)', 'https://www.acs.org.au/msa.html'),
+    '2615': ('Australian Computer Society (ACS)', 'https://www.acs.org.au/msa.html'),
+    '2621': ('Australian Computer Society (ACS)', 'https://www.acs.org.au/msa.html'),
+    '3131': ('Australian Computer Society (ACS)', 'https://www.acs.org.au/msa.html'),
+    '3132': ('Australian Computer Society (ACS)', 'https://www.acs.org.au/msa.html'),
+    '2331': ('Engineers Australia', 'https://www.engineersaustralia.org.au/skills-assessment'),
+    '2332': ('Engineers Australia', 'https://www.engineersaustralia.org.au/skills-assessment'),
+    '2333': ('Engineers Australia', 'https://www.engineersaustralia.org.au/skills-assessment'),
+    '2334': ('Engineers Australia', 'https://www.engineersaustralia.org.au/skills-assessment'),
+    '2335': ('Engineers Australia', 'https://www.engineersaustralia.org.au/skills-assessment'),
+    '2341': ('Engineers Australia', 'https://www.engineersaustralia.org.au/skills-assessment'),
+    '3121': ('Engineers Australia', 'https://www.engineersaustralia.org.au/skills-assessment'),
+    '3122': ('Engineers Australia', 'https://www.engineersaustralia.org.au/skills-assessment'),
+    '3123': ('Engineers Australia', 'https://www.engineersaustralia.org.au/skills-assessment'),
+    '2211': ('CPA Australia / CA ANZ / IPA', 'https://www.cpaaustralia.com.au/become-a-cpa/skills-assessment'),
+    '2212': ('CPA Australia / CA ANZ / IPA', 'https://www.cpaaustralia.com.au/become-a-cpa/skills-assessment'),
+    '2321': ('Architects Accreditation Council of Australia (AACA)', 'https://www.aaca.org.au'),
+    '2541': ('Australian Medical Council (AMC)', 'https://www.amc.org.au'),
+    '2544': ('ANMAC', 'https://anmac.org.au/skills-assessment'),
+    '2546': ('ANMAC', 'https://anmac.org.au/skills-assessment'),
+    '2523': ('Australian Physiotherapy Council', 'https://physiocouncil.com.au'),
+    '2514': ('AHPRA', 'https://www.ahpra.gov.au'),
+    '2516': ('AHPRA', 'https://www.ahpra.gov.au'),
+    '2526': ('AHPRA', 'https://www.ahpra.gov.au'),
+    '2723': ('AHPRA', 'https://www.ahpra.gov.au'),
+    '2342': ('Australasian Veterinary Boards Council', 'https://www.avbc.asn.au'),
+    '2241': ('VETASSESS', 'https://www.vetassess.com.au/skills-assessment-for-migration'),
+    '2242': ('VETASSESS', 'https://www.vetassess.com.au/skills-assessment-for-migration'),
+    '2243': ('VETASSESS', 'https://www.vetassess.com.au/skills-assessment-for-migration'),
+    '2247': ('VETASSESS', 'https://www.vetassess.com.au/skills-assessment-for-migration'),
+    '2248': ('VETASSESS', 'https://www.vetassess.com.au/skills-assessment-for-migration'),
+    '1321': ('VETASSESS', 'https://www.vetassess.com.au/skills-assessment-for-migration'),
+    '2725': ('AASW', 'https://www.aasw.asn.au/careers-and-employment/migration-skills-assessment'),
+    '2411': ('AITSL', 'https://www.aitsl.edu.au/tools-resources/resource/overseas-qualified-teachers-and-leaders'),
+    '2412': ('AITSL', 'https://www.aitsl.edu.au/tools-resources/resource/overseas-qualified-teachers-and-leaders'),
+    '2413': ('AITSL', 'https://www.aitsl.edu.au/tools-resources/resource/overseas-qualified-teachers-and-leaders'),
+    '2414': ('AITSL', 'https://www.aitsl.edu.au/tools-resources/resource/overseas-qualified-teachers-and-leaders'),
+    '2493': ('AITSL', 'https://www.aitsl.edu.au/tools-resources/resource/overseas-qualified-teachers-and-leaders'),
+}
+
+
+def _assessing_body(code: str) -> tuple[str, str] | None:
+    return ASSESSING_BODIES.get(code[:4])
 
 
 def _score_label(score: int) -> str:
@@ -261,6 +311,8 @@ for i, match in enumerate(results, 1):
     label     = _score_label(match['match_score'])
     is_top    = (i == 1)
 
+    body = _assessing_body(match['code'])
+
     with st.container(border=True):
         c1, c2 = st.columns([3, 1])
         with c1:
@@ -269,10 +321,19 @@ for i, match in enumerate(results, 1):
                 header += '  ⭐'
             st.markdown(header)
             st.caption(match.get('explanation', ''))
-            st.markdown(
-                f'[Search jobs on SEEK →]({seek_search_url(match["title"])})  ·  '
-                f'[Find assessing authority →](https://immi.homeaffairs.gov.au/visas/working-in-australia/skills-assessment/skills-assessing-authorities)'
+            search_links = (
+                f'Search: [LinkedIn]({linkedin_search_url(match["title"])}) · '
+                f'[SEEK]({seek_search_url(match["title"])}) · '
+                f'[Indeed]({indeed_search_url(match["title"])})'
             )
+            if body:
+                search_links += f'  \nAssessing body: [{body[0]}]({body[1]})'
+            else:
+                search_links += (
+                    '  \n[Find assessing authority →]'
+                    '(https://immi.homeaffairs.gov.au/visas/working-in-australia/skill-occupation-list)'
+                )
+            st.markdown(search_links)
         with c2:
             st.markdown(f'**{match["match_score"]}/100** {conf_icon}')
             st.caption(label)
@@ -286,61 +347,15 @@ st.markdown(
     '1. **Note your top ANZSCO code** — this is what you will submit in your skills assessment application.\n'
     '2. **Verify your visa pathway** — confirm your code appears on the '
     '[Home Affairs skilled occupation list](https://immi.homeaffairs.gov.au/visas/working-in-australia/skill-occupation-list).\n'
-    '3. **Find your assessing body** — each occupation is assessed by a specific authority; '
-    'check the [skills assessment page](https://immi.homeaffairs.gov.au/visas/getting-a-visa/visa-listing/skilled-independent-189/points-tested) '
+    '3. **Find your assessing body** — each occupation is assessed by a specific authority. '
+    'Use the link on your top result above, or check the '
+    '[skills assessment page](https://immi.homeaffairs.gov.au/visas/working-in-australia/skills-assessment) '
     'to find yours.\n'
-    '4. **Explore the job market** — use the job search below to gauge demand before you apply.'
+    '4. **Explore the job market** — live listings appear below.'
 )
 
 # ---------------------------------------------------------------------------
-# Live jobs — button-triggered
-# ---------------------------------------------------------------------------
-st.markdown('---')
-qualifying = ([m for m in results if m.get('match_score', 0) > 55] or results[:1])[:2]
-
-if qualifying:
-    person = f"{first_name}'s" if first_name else 'Your'
-    st.subheader(f'Live job listings — {person} top matches')
-    n_occ = len(qualifying)
-    est   = '~45 seconds' if n_occ == 1 else '~90 seconds'
-    st.caption(
-        f'Showing your top {n_occ} occupation{"s" if n_occ > 1 else ""}. '
-        f'Searches SEEK, LinkedIn, and Indeed — {est}. '
-        'If a job board returns no results, a direct search link is shown instead.'
-    )
-
-    jobs_key = 'jobs_' + '_'.join(m['code'] for m in qualifying)
-
-    if jobs_key not in st.session_state:
-        n = len(qualifying)
-        if st.button(
-            f'Search live job boards for {n} occupation{"s" if n > 1 else ""}',
-            key='search_jobs',
-            type='primary',
-        ):
-            if not os.environ.get('APIFY_TOKEN'):
-                st.session_state[jobs_key] = {m['code']: {} for m in qualifying}
-            else:
-                with st.spinner('Searching SEEK, LinkedIn, and Indeed...'):
-                    try:
-                        titles_by_code = {m['code']: m['title'] for m in qualifying}
-                        st.session_state[jobs_key] = fetch_jobs_for_codes(titles_by_code, n=3)
-                    except Exception:
-                        st.session_state[jobs_key] = {m['code']: {} for m in qualifying}
-            st.rerun()
-    else:
-        all_jobs = st.session_state[jobs_key]
-        if len(qualifying) == 1:
-            m = qualifying[0]
-            _render_jobs(all_jobs.get(m['code'], {}), m['title'])
-        else:
-            tabs = st.tabs([f'{m["code"]} {m["title"]}' for m in qualifying])
-            for tab, m in zip(tabs, qualifying):
-                with tab:
-                    _render_jobs(all_jobs.get(m['code'], {}), m['title'])
-
-# ---------------------------------------------------------------------------
-# Feedback
+# Feedback — above the (slow) jobs section so it renders immediately
 # ---------------------------------------------------------------------------
 st.markdown('---')
 st.markdown('**Were these results helpful?**')
@@ -366,3 +381,44 @@ else:
             if not ok:
                 st.session_state[f'{feedback_key}_err'] = True
             st.rerun()
+
+# ---------------------------------------------------------------------------
+# Live jobs — auto-triggered
+# ---------------------------------------------------------------------------
+st.markdown('---')
+qualifying = ([m for m in results if m.get('match_score', 0) > 55] or results[:1])[:2]
+
+if qualifying:
+    person = f"{first_name}'s" if first_name else 'Your'
+    st.subheader(f'Live job listings — {person} top matches')
+    n_occ = len(qualifying)
+    est   = '~45 seconds' if n_occ == 1 else '~90 seconds'
+    st.caption(
+        f'Showing your top {n_occ} occupation{"s" if n_occ > 1 else ""}. '
+        f'Searches SEEK, LinkedIn, and Indeed — {est}. '
+        'If a job board returns no results, a direct search link is shown instead.'
+    )
+
+    jobs_key = 'jobs_' + '_'.join(m['code'] for m in qualifying)
+
+    if jobs_key not in st.session_state:
+        with st.spinner(f'Searching live jobs — {est}. Results will appear below...'):
+            if not os.environ.get('APIFY_TOKEN'):
+                st.session_state[jobs_key] = {m['code']: {} for m in qualifying}
+            else:
+                try:
+                    titles_by_code = {m['code']: m['title'] for m in qualifying}
+                    st.session_state[jobs_key] = fetch_jobs_for_codes(titles_by_code, n=3)
+                except Exception:
+                    st.session_state[jobs_key] = {m['code']: {} for m in qualifying}
+        st.rerun()
+    else:
+        all_jobs = st.session_state[jobs_key]
+        if len(qualifying) == 1:
+            m = qualifying[0]
+            _render_jobs(all_jobs.get(m['code'], {}), m['title'])
+        else:
+            tabs = st.tabs([f'{m["code"]} {m["title"]}' for m in qualifying])
+            for tab, m in zip(tabs, qualifying):
+                with tab:
+                    _render_jobs(all_jobs.get(m['code'], {}), m['title'])
