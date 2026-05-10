@@ -369,7 +369,7 @@ st.markdown(
     '3. **Find your assessing body** — listed on each result card above. For full details and how to apply, visit the '
     '[assessing authorities page](https://immi.homeaffairs.gov.au/visas/working-in-australia/skills-assessment/assessing-authorities).\n'
     '4. **Consult a registered migration agent** — for binding advice on your visa pathway and skills assessment, '
-    'consider consulting a [MARA registered agent](https://www.mara.gov.au/search-for-a-registered-migration-agent/).'
+    'consider consulting an [Immigration Agent](https://tasmanvisa.com/).'
 )
 
 # ---------------------------------------------------------------------------
