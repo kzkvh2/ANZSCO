@@ -18,7 +18,8 @@ from src.rag.cv_parser import extract_text, parsability_score
 from src.rag.matcher import match_cv, preload
 from src.jobs import fetch_jobs_for_codes, seek_search_url, indeed_search_url, linkedin_search_url
 
-WEB3FORMS_KEY = '7fdb3ee2-ba92-4fed-bcd8-ecc37e4e39a3'
+BREVO_API_KEY  = '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'
+FEEDBACK_EMAIL = 'lizanpeter@gmail.com'
 
 # Wire Apify token from Streamlit secrets into env so src/jobs.py can read it.
 try:
@@ -86,19 +87,26 @@ def _render_jobs(jobs: dict, title: str) -> None:
 
 
 def _send_feedback(thumbs_up: bool, results: list[dict]) -> bool:
-    """Returns True if submission succeeded."""
+    """Send feedback email via Brevo. Returns True on success."""
     top = results[0] if results else {}
-    all_codes = ', '.join(f"{r['code']} {r['title']}" for r in results)
+    icon = '👍' if thumbs_up else '👎'
+    lines = '\n'.join(
+        f"  #{i} {r['code']} {r['title']} — {r.get('match_score','?')}/100 ({r.get('confidence','?')} confidence)"
+        for i, r in enumerate(results, 1)
+    )
     try:
         r = requests.post(
-            'https://api.web3forms.com/submit',
+            'https://api.brevo.com/v3/smtp/email',
+            headers={'api-key': BREVO_API_KEY, 'Content-Type': 'application/json'},
             json={
-                'access_key': WEB3FORMS_KEY,
-                'subject': f'ANZSCO Finder — {"👍" if thumbs_up else "👎"} feedback',
-                'top_result': f"{top.get('code')} {top.get('title')} ({top.get('match_score')}/100)",
-                'all_results': all_codes,
-                'feedback': 'Helpful' if thumbs_up else 'Not helpful',
-                'botcheck': '',
+                'sender': {'name': 'ANZSCO Finder', 'email': FEEDBACK_EMAIL},
+                'to': [{'email': FEEDBACK_EMAIL}],
+                'subject': f'ANZSCO Finder — {icon} {"Helpful" if thumbs_up else "Not helpful"}',
+                'textContent': (
+                    f'Feedback: {"Helpful" if thumbs_up else "Not helpful"}\n\n'
+                    f'Top result: {top.get("code")} {top.get("title")} ({top.get("match_score")}/100)\n\n'
+                    f'All results:\n{lines}'
+                ),
             },
             timeout=8,
         )
@@ -142,6 +150,11 @@ st.caption(
 # ---------------------------------------------------------------------------
 st.markdown('---')
 st.markdown('**Upload your CV** — PDF or Word document, English only.')
+st.caption(
+    '🔒 Your CV is not stored. It is processed in memory, the text is sent to '
+    'Anthropic\'s API to identify your occupation codes, and then discarded. '
+    'Nothing is saved after your session ends.'
+)
 uploaded = st.file_uploader(
     'Upload CV',
     type=['pdf', 'docx', 'doc'],
@@ -283,14 +296,17 @@ st.markdown(
 # Live jobs — button-triggered
 # ---------------------------------------------------------------------------
 st.markdown('---')
-qualifying = [m for m in results if m.get('match_score', 0) > 55] or results[:1]
+qualifying = ([m for m in results if m.get('match_score', 0) > 55] or results[:1])[:2]
 
 if qualifying:
     person = f"{first_name}'s" if first_name else 'Your'
     st.subheader(f'Live job listings — {person} top matches')
+    n_occ = len(qualifying)
+    est   = '~45 seconds' if n_occ == 1 else '~90 seconds'
     st.caption(
-        f'Showing jobs for {len(qualifying)} occupation{"s" if len(qualifying) > 1 else ""}. '
-        'Searches SEEK, LinkedIn, and Indeed simultaneously (~45 seconds).'
+        f'Showing your top {n_occ} occupation{"s" if n_occ > 1 else ""}. '
+        f'Searches SEEK, LinkedIn, and Indeed — {est}. '
+        'If a job board returns no results, a direct search link is shown instead.'
     )
 
     jobs_key = 'jobs_' + '_'.join(m['code'] for m in qualifying)

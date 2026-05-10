@@ -86,7 +86,7 @@ def fetch_linkedin_jobs(title: str, n: int = 3) -> list[dict]:
 def fetch_indeed_jobs(title: str, n: int = 3) -> list[dict]:
     items = _run_actor_sync(
         'misceres~indeed-scraper',
-        {'position': title, 'country': 'AU', 'maxItems': n},
+        {'position': title, 'country': 'Australia', 'maxItems': n},
         timeout_secs=60,
     )
     results = []
@@ -120,23 +120,18 @@ def fetch_all_jobs(title: str, n: int = 3) -> dict:
 
 def fetch_jobs_for_codes(titles_by_code: dict[str, str], n: int = 3) -> dict[str, dict]:
     """
-    Fetch jobs for multiple ANZSCO codes in parallel.
+    Fetch jobs for multiple ANZSCO codes.
 
-    Args:
-        titles_by_code: {code: occupation_title, ...}
-        n: jobs per source per code
+    Occupations are fetched sequentially to stay within Apify's free-tier
+    concurrency limit (3 actors at once). Within each occupation, SEEK,
+    LinkedIn, and Indeed run in parallel via fetch_all_jobs.
 
     Returns:
         {code: {'seek': [...], 'linkedin': [...], 'indeed': [...]}, ...}
     """
     results: dict[str, dict] = {}
-    with concurrent.futures.ThreadPoolExecutor(max_workers=min(9, len(titles_by_code) * 3)) as ex:
-        futures = {
-            code: ex.submit(fetch_all_jobs, title, n)
-            for code, title in titles_by_code.items()
-        }
-        for code, fut in futures.items():
-            results[code] = fut.result()
+    for code, title in titles_by_code.items():
+        results[code] = fetch_all_jobs(title, n)
     return results
 
 
