@@ -7,7 +7,7 @@ AI tool that reads a CV and returns the top 5 matching ANZSCO occupation codes f
 
 ## Live products
 - Landing page: https://kzkvh2.github.io/ANZSCO/
-- Streamlit app: https://anzsco.streamlit.app/
+- Streamlit app: https://kzkvh2-anzsco.hf.space
 - GitHub repo: https://github.com/kzkvh2/ANZSCO
 
 ## Quick start (local dev)

@@ -17,7 +17,7 @@
 > Thanks for signing up.
 >
 > You can use the tool right now — no waiting list:
-> **https://anzsco.streamlit.app**
+> **https://kzkvh2-anzsco.hf.space**
 >
 > Upload your CV (PDF or Word) and you'll get your top 5 ANZSCO code matches in about 10 seconds.
 >
@@ -52,7 +52,7 @@
 > **3. Picking the most senior-sounding code**
 > If you've managed a team but spent 80% of your time doing technical work, you're more likely a technical specialist than a manager. The code should reflect where most of your duties fall.
 >
-> The tool at https://anzsco.streamlit.app accounts for all of this — it reads your full CV, not just your job title.
+> The tool at https://kzkvh2-anzsco.hf.space accounts for all of this — it reads your full CV, not just your job title.
 >
 > If you've already got your result and want a second opinion, just reply.
 >
