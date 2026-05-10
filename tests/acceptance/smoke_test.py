@@ -4,7 +4,7 @@ Use this to validate the matching engine before running the full acceptance suit
 
 Usage:
   export ANTHROPIC_API_KEY=sk-ant-...
-  cd ~/projects/mate1
+  cd ~/projects/anzsco
   PYTHONPATH=. .venv/bin/python3 tests/acceptance/smoke_test.py
 """
 

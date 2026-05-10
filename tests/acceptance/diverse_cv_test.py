@@ -13,7 +13,7 @@ Pass criteria: same as acceptance_test.py
   - Top-1 accuracy >= 5/10
 
 Usage:
-  cd ~/projects/mate1
+  cd ~/projects/anzsco
   ANTHROPIC_API_KEY=sk-ant-... PYTHONPATH=. .venv/bin/python3 tests/acceptance/diverse_cv_test.py
 """
 

@@ -12,7 +12,7 @@ AI tool that reads a CV and returns the top 5 matching ANZSCO occupation codes f
 
 ## Quick start (local dev)
 ```bash
-cd ~/projects/mate1
+cd ~/projects/anzsco
 export ANTHROPIC_API_KEY=sk-ant-...
 .venv/bin/streamlit run app/streamlit_app.py
 ```

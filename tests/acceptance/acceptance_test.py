@@ -12,7 +12,7 @@ Known limitation (tracked): seniority / tenure not factored into matching.
 A 20-year IT manager may score as an ICT support technician. Fix pending.
 
 Usage:
-  cd ~/projects/mate1
+  cd ~/projects/anzsco
   ANTHROPIC_API_KEY=sk-ant-... PYTHONPATH=. .venv/bin/python3 tests/acceptance/acceptance_test.py
 """
 
