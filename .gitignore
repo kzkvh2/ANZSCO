@@ -9,4 +9,5 @@ tests/acceptance/last_run.json
 *.log
 .DS_Store
 .claude/settings.local.json
+.streamlit/secrets.toml
 tests/acceptance/diverse_run.json
