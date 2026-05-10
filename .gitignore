@@ -8,3 +8,5 @@ tests/acceptance/last_run.json
 /tmp/
 *.log
 .DS_Store
+.claude/settings.local.json
+tests/acceptance/diverse_run.json

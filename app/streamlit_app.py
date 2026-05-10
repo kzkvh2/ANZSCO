@@ -10,9 +10,31 @@ Run:
 import sys, pathlib
 sys.path.insert(0, str(pathlib.Path(__file__).parent.parent))
 
+import requests
 import streamlit as st
 from src.rag.cv_parser import extract_text, parsability_score
 from src.rag.matcher import match_cv, preload
+
+WEB3FORMS_KEY = '7fdb3ee2-ba92-4fed-bcd8-ecc37e4e39a3'
+
+
+def _send_feedback(thumbs_up: bool, top_results: list[dict]) -> None:
+    top = top_results[0] if top_results else {}
+    all_codes = ', '.join(f"{r['code']} {r['title']}" for r in top_results)
+    try:
+        requests.post(
+            'https://api.web3forms.com/submit',
+            data={
+                'access_key': WEB3FORMS_KEY,
+                'subject': f'ANZSCO Finder — {"👍" if thumbs_up else "👎"} feedback',
+                'top_result': f"{top.get('code')} {top.get('title')} ({top.get('match_score')}/100)",
+                'all_results': all_codes,
+                'feedback': 'Helpful' if thumbs_up else 'Not helpful',
+            },
+            timeout=5,
+        )
+    except Exception:
+        pass  # feedback is best-effort; don't surface errors to user
 
 
 @st.cache_resource(show_spinner="Loading ANZSCO knowledge base — first launch takes ~1 min...")
@@ -136,3 +158,22 @@ if uploaded:
             'before submitting a visa application.',
             icon='⚠️',
         )
+
+        st.divider()
+
+        st.markdown('**Were these results helpful?**')
+        feedback_key = f'feedback_sent_{id(result)}'
+        if st.session_state.get(feedback_key):
+            st.success('Thanks for your feedback — it helps us improve the tool.')
+        else:
+            col_up, col_down, _ = st.columns([1, 1, 6])
+            with col_up:
+                if st.button('👍  Yes', key='fb_up'):
+                    _send_feedback(True, result['results'])
+                    st.session_state[feedback_key] = True
+                    st.rerun()
+            with col_down:
+                if st.button('👎  No', key='fb_down'):
+                    _send_feedback(False, result['results'])
+                    st.session_state[feedback_key] = True
+                    st.rerun()
