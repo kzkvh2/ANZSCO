@@ -17,17 +17,20 @@ from src.rag.cv_parser import extract_text, parsability_score
 from src.rag.matcher import match_cv, preload
 from src.jobs import fetch_adzuna_jobs, fetch_jobs_for_codes, seek_search_url, indeed_search_url, linkedin_search_url
 
-BREVO_API_KEY  = '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'
 FEEDBACK_EMAIL = 'lizanpeter@gmail.com'
 
-# Wire Adzuna credentials from Streamlit secrets into env so src/jobs.py can read them.
+# Wire secrets from Streamlit secrets / env vars.
 try:
+    if 'BREVO_API_KEY' in st.secrets:
+        os.environ['BREVO_API_KEY'] = st.secrets['BREVO_API_KEY']
     if 'ADZUNA_APP_ID' in st.secrets:
         os.environ['ADZUNA_APP_ID'] = st.secrets['ADZUNA_APP_ID']
     if 'ADZUNA_APP_KEY' in st.secrets:
         os.environ['ADZUNA_APP_KEY'] = st.secrets['ADZUNA_APP_KEY']
 except Exception:
     pass
+
+BREVO_API_KEY = os.environ.get('BREVO_API_KEY', '')
 
 # ---------------------------------------------------------------------------
 # Assessing body mapping — keyed by first 4 digits of ANZSCO code
