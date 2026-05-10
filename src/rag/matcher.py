@@ -114,23 +114,17 @@ def profile_to_query(profile: dict) -> str:
 # Step 2+3: Embed + cosine similarity retrieval
 # ---------------------------------------------------------------------------
 
-MIN_COSINE_SCORE = 0.50  # discard anything below this — likely irrelevant
-
 def retrieve_candidates(query_text: str, top_k: int = 20) -> list[dict]:
-    """Embed query, compute cosine similarity, return top_k candidates above threshold."""
+    """Embed query, compute cosine similarity, return top_k candidates."""
     model      = _get_st_model()
     embeddings, metadata = _get_index()
 
     query_vec  = embed_query(query_text, model)
     scores     = embeddings @ query_vec          # cosine sim (embeddings are normalized)
 
-    ranked = np.argsort(scores)[::-1]
+    ranked = np.argsort(scores)[::-1][:top_k]
     candidates = []
     for i in ranked:
-        if len(candidates) >= top_k:
-            break
-        if scores[i] < MIN_COSINE_SCORE:
-            break  # sorted descending — everything below is worse
         meta = metadata[i]
         candidates.append({
             'code':            meta['code'],
@@ -145,27 +139,6 @@ def retrieve_candidates(query_text: str, top_k: int = 20) -> list[dict]:
             'embedding_text':  meta['embedding_text'],
             'cosine_score':    float(scores[i]),
         })
-
-    # If fewer than 5 passed the threshold, lower the floor and fill up to 5
-    # so Claude always has something to work with
-    if len(candidates) < 5:
-        for i in ranked[len(candidates):]:
-            if len(candidates) >= 5:
-                break
-            meta = metadata[i]
-            candidates.append({
-                'code':            meta['code'],
-                'title':           meta['title'],
-                'unit_title':      meta['unit_title'],
-                'minor_title':     meta['minor_title'],
-                'sub_major_title': meta['sub_major_title'],
-                'major_title':     meta['major_title'],
-                'skill_level':     meta['skill_level'],
-                'alt_titles':      meta['alt_titles'],
-                'specialisations': meta['specialisations'],
-                'embedding_text':  meta['embedding_text'],
-                'cosine_score':    float(scores[i]),
-            })
 
     return candidates
 

@@ -53,8 +53,8 @@ ASSESSING_BODIES = {
     '3121': ('Engineers Australia', 'https://www.engineersaustralia.org.au/skills-assessment'),
     '3122': ('Engineers Australia', 'https://www.engineersaustralia.org.au/skills-assessment'),
     '3123': ('Engineers Australia', 'https://www.engineersaustralia.org.au/skills-assessment'),
-    '2211': ('CPA Australia / CA ANZ / IPA', 'https://www.cpaaustralia.com.au/become-a-cpa/skills-assessment'),
-    '2212': ('CPA Australia / CA ANZ / IPA', 'https://www.cpaaustralia.com.au/become-a-cpa/skills-assessment'),
+    '2211': ('CPA Australia / CA ANZ / IPA', 'https://www.cpaaustralia.com.au/migration-services/migration-to-australia/how-to-apply-for-a-migration-skill-assessment'),
+    '2212': ('CPA Australia / CA ANZ / IPA', 'https://www.cpaaustralia.com.au/migration-services/migration-to-australia/how-to-apply-for-a-migration-skill-assessment'),
     '2321': ('Architects Accreditation Council of Australia (AACA)', 'https://www.aaca.org.au'),
     '2541': ('Australian Medical Council (AMC)', 'https://www.amc.org.au'),
     '2544': ('ANMAC', 'https://anmac.org.au/skills-assessment'),
@@ -371,7 +371,7 @@ else:
 # Live jobs — auto-triggered
 # ---------------------------------------------------------------------------
 st.markdown('---')
-qualifying = ([m for m in results if m.get('match_score', 0) > 55] or results[:1])[:2]
+qualifying = results[:2]
 
 if qualifying:
     person = f"{first_name}'s" if first_name else 'Your'
