@@ -312,60 +312,11 @@ for i, match in enumerate(results, 1):
                 f'[Indeed]({indeed_search_url(match["title"])})'
             )
             if body:
-                search_links += f'  \nAssessing body: [{body[0]}]({body[1]})'
-            else:
-                search_links += (
-                    '  \n[Find assessing authority →]'
-                    '(https://immi.homeaffairs.gov.au/visas/working-in-australia/skill-occupation-list)'
-                )
+                search_links += f'  \nAssessing body: {body[0]}'
             st.markdown(search_links)
         with c2:
             st.markdown(f'**{match["match_score"]}/100** {conf_icon}')
             st.caption(label)
-
-# ---------------------------------------------------------------------------
-# What to do next
-# ---------------------------------------------------------------------------
-st.markdown('---')
-st.subheader('What to do next')
-st.markdown(
-    '1. **Note your top ANZSCO code** — this is what you will submit in your skills assessment application.\n'
-    '2. **Verify your visa pathway** — confirm your code appears on the '
-    '[Home Affairs skilled occupation list](https://immi.homeaffairs.gov.au/visas/working-in-australia/skill-occupation-list).\n'
-    '3. **Find your assessing body** — each occupation is assessed by a specific authority. '
-    'Use the link on your top result above, or check the '
-    '[skills assessment page](https://immi.homeaffairs.gov.au/visas/working-in-australia/skills-assessment) '
-    'to find yours.\n'
-    '4. **Explore the job market** — live listings appear below.'
-)
-
-# ---------------------------------------------------------------------------
-# Feedback — above the (slow) jobs section so it renders immediately
-# ---------------------------------------------------------------------------
-st.markdown('---')
-st.markdown('**Were these results helpful?**')
-feedback_key = f'feedback_{file_hash}'
-if st.session_state.get(feedback_key):
-    if st.session_state.get(f'{feedback_key}_err'):
-        st.warning('Feedback recorded locally but could not reach our server — please try again later.')
-    else:
-        st.success('Thanks for your feedback — it helps us improve the tool.')
-else:
-    col_up, col_down, _ = st.columns([1, 1, 6])
-    with col_up:
-        if st.button('👍  Yes', key='fb_up'):
-            ok = _send_feedback(True, results)
-            st.session_state[feedback_key] = True
-            if not ok:
-                st.session_state[f'{feedback_key}_err'] = True
-            st.rerun()
-    with col_down:
-        if st.button('👎  No', key='fb_down'):
-            ok = _send_feedback(False, results)
-            st.session_state[feedback_key] = True
-            if not ok:
-                st.session_state[f'{feedback_key}_err'] = True
-            st.rerun()
 
 # ---------------------------------------------------------------------------
 # Live jobs — auto-triggered
@@ -405,3 +356,46 @@ if qualifying:
             for tab, m in zip(tabs, qualifying):
                 with tab:
                     _render_jobs(all_jobs.get(m['code'], []), m['title'])
+
+# ---------------------------------------------------------------------------
+# What to do next
+# ---------------------------------------------------------------------------
+st.markdown('---')
+st.subheader('What to do next')
+st.markdown(
+    '1. **Note your top ANZSCO code** — this is what you will submit in your skills assessment application.\n'
+    '2. **Verify your visa pathway** — confirm your code appears on the '
+    '[Home Affairs skilled occupation list](https://immi.homeaffairs.gov.au/visas/working-in-australia/skill-occupation-list).\n'
+    '3. **Find your assessing body** — listed on each result card above. For full details and how to apply, visit the '
+    '[assessing authorities page](https://immi.homeaffairs.gov.au/visas/working-in-australia/skills-assessment/assessing-authorities).\n'
+    '4. **Consult a registered migration agent** — for binding advice on your visa pathway and skills assessment, '
+    'consider consulting a [MARA registered agent](https://www.mara.gov.au/search-for-a-registered-migration-agent/).'
+)
+
+# ---------------------------------------------------------------------------
+# Feedback
+# ---------------------------------------------------------------------------
+st.markdown('---')
+st.markdown('**Were these results helpful?**')
+feedback_key = f'feedback_{file_hash}'
+if st.session_state.get(feedback_key):
+    if st.session_state.get(f'{feedback_key}_err'):
+        st.warning('Feedback recorded locally but could not reach our server — please try again later.')
+    else:
+        st.success('Thanks for your feedback — it helps us improve the tool.')
+else:
+    col_up, col_down, _ = st.columns([1, 1, 6])
+    with col_up:
+        if st.button('👍  Yes', key='fb_up'):
+            ok = _send_feedback(True, results)
+            st.session_state[feedback_key] = True
+            if not ok:
+                st.session_state[f'{feedback_key}_err'] = True
+            st.rerun()
+    with col_down:
+        if st.button('👎  No', key='fb_down'):
+            ok = _send_feedback(False, results)
+            st.session_state[feedback_key] = True
+            if not ok:
+                st.session_state[f'{feedback_key}_err'] = True
+            st.rerun()
