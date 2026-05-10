@@ -29,10 +29,6 @@ except Exception:
     pass
 
 
-def _jsa_url(code: str) -> str:
-    return f'https://www.jobsandskills.gov.au/data/occupation-and-industry-profiles/occupations/{code}'
-
-
 def _render_jobs(jobs: dict, title: str, code: str) -> None:
     """Render job results from SEEK, LinkedIn, and Indeed in three columns."""
     seek_jobs   = jobs.get('seek', [])
@@ -83,8 +79,6 @@ def _render_jobs(jobs: dict, title: str, code: str) -> None:
                 st.write('')
         else:
             st.markdown(f'[Search all Indeed listings]({indeed_search_url(title)})')
-
-    st.markdown(f'**Labour market outlook** — [View occupation profile on Jobs and Skills Australia]({_jsa_url(code)})')
 
 
 def _send_feedback(thumbs_up: bool, top_results: list[dict]) -> None:
@@ -224,10 +218,7 @@ if uploaded:
             with c1:
                 st.markdown(f'**#{i} — {match["code"]} {match["title"]}**')
                 st.caption(match.get('explanation', ''))
-                st.markdown(
-                    f'[Search jobs on SEEK]({seek_search_url(match["title"])}) · '
-                    f'[Jobs and Skills Australia]({_jsa_url(match["code"])})',
-                )
+                st.markdown(f'[Search jobs on SEEK]({seek_search_url(match["title"])})')
             with c2:
                 st.markdown(f'**{match["match_score"]}/100** {conf_icon}')
                 st.caption(f'`{score_bar}`')
@@ -265,9 +256,17 @@ if uploaded:
         jobs_cache_key = 'jobs_' + '_'.join(m['code'] for m in qualifying)
 
         if jobs_cache_key not in st.session_state:
-            with st.spinner('Searching SEEK, LinkedIn, and Indeed... (~45 seconds)'):
-                titles_by_code = {m['code']: m['title'] for m in qualifying}
-                st.session_state[jobs_cache_key] = fetch_jobs_for_codes(titles_by_code, n=3)
+            if not os.environ.get('APIFY_TOKEN'):
+                # No token — pre-populate with empty so search links show immediately
+                st.session_state[jobs_cache_key] = {m['code']: {} for m in qualifying}
+            else:
+                with st.spinner('Searching SEEK, LinkedIn, and Indeed... (~45 seconds)'):
+                    titles_by_code = {m['code']: m['title'] for m in qualifying}
+                    try:
+                        st.session_state[jobs_cache_key] = fetch_jobs_for_codes(titles_by_code, n=3)
+                    except Exception:
+                        st.session_state[jobs_cache_key] = {m['code']: {} for m in qualifying}
+                st.rerun()
 
         all_jobs = st.session_state[jobs_cache_key]
 
