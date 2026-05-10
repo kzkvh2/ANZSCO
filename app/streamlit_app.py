@@ -21,9 +21,14 @@ from src.jobs import fetch_all_jobs, seek_search_url, indeed_search_url, linkedi
 
 WEB3FORMS_KEY = '7fdb3ee2-ba92-4fed-bcd8-ecc37e4e39a3'
 
-# Wire Apify token from Streamlit secrets into env so src/jobs.py can read it
-if 'APIFY_TOKEN' in st.secrets:
-    os.environ['APIFY_TOKEN'] = st.secrets['APIFY_TOKEN']
+# Wire Apify token from Streamlit secrets into env so src/jobs.py can read it.
+# Wrapped in try/except: st.secrets raises FileNotFoundError when no secrets
+# are configured on Streamlit Cloud (e.g. fresh deployment).
+try:
+    if 'APIFY_TOKEN' in st.secrets:
+        os.environ['APIFY_TOKEN'] = st.secrets['APIFY_TOKEN']
+except Exception:
+    pass
 
 
 def _seek_url(title: str) -> str:
