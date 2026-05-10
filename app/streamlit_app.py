@@ -11,13 +11,19 @@ import sys, pathlib
 sys.path.insert(0, str(pathlib.Path(__file__).parent.parent))
 
 import re
+import os
 import urllib.parse
 import requests
 import streamlit as st
 from src.rag.cv_parser import extract_text, parsability_score
 from src.rag.matcher import match_cv, preload
+from src.jobs import fetch_all_jobs, seek_search_url, indeed_search_url, linkedin_search_url
 
 WEB3FORMS_KEY = '7fdb3ee2-ba92-4fed-bcd8-ecc37e4e39a3'
+
+# Wire Apify token from Streamlit secrets into env so src/jobs.py can read it
+if 'APIFY_TOKEN' in st.secrets:
+    os.environ['APIFY_TOKEN'] = st.secrets['APIFY_TOKEN']
 
 
 def _seek_url(title: str) -> str:
@@ -27,6 +33,48 @@ def _seek_url(title: str) -> str:
 def _lmi_url(code: str, title: str) -> str:
     slug = re.sub(r'[^a-z0-9]+', '-', title.lower()).strip('-')
     return f'https://labourmarketinsights.gov.au/occupation-profile/{slug}?occupationCode={code}'
+
+
+def _render_jobs(jobs: dict, title: str, code: str) -> None:
+    """Render job results from SEEK, LinkedIn, and search links for Indeed + LMI."""
+    seek_jobs = jobs.get('seek', [])
+    li_jobs   = jobs.get('linkedin', [])
+
+    col_seek, col_li = st.columns(2)
+
+    with col_seek:
+        st.markdown('**SEEK**')
+        if seek_jobs:
+            for j in seek_jobs:
+                st.markdown(
+                    f'[{j["title"]}]({j["url"]})\n\n'
+                    f'<small>{j["company"]} · {j["location"]}'
+                    + (f' · {j["salary"]}' if j.get('salary') else '')
+                    + '</small>',
+                    unsafe_allow_html=True,
+                )
+                st.write('')
+        else:
+            st.markdown(f'[Search all SEEK listings]({seek_search_url(title)})')
+
+    with col_li:
+        st.markdown('**LinkedIn**')
+        if li_jobs:
+            for j in li_jobs:
+                st.markdown(
+                    f'[{j["title"]}]({j["url"]})\n\n'
+                    f'<small>{j["company"]} · {j["location"]}</small>',
+                    unsafe_allow_html=True,
+                )
+                st.write('')
+        else:
+            st.markdown(f'[Search all LinkedIn listings]({linkedin_search_url(title)})')
+
+    col_indeed, col_lmi = st.columns(2)
+    with col_indeed:
+        st.markdown(f'**Indeed** — [Search all listings]({indeed_search_url(title)})')
+    with col_lmi:
+        st.markdown(f'**Labour market outlook** — [View occupation profile]({_lmi_url(code, title)})')
 
 
 def _send_feedback(thumbs_up: bool, top_results: list[dict]) -> None:
@@ -173,6 +221,28 @@ if uploaded:
             'before submitting a visa application.',
             icon='⚠️',
         )
+
+        # -----------------------------------------------------------------------
+        # Live jobs section — top match only
+        # -----------------------------------------------------------------------
+        st.divider()
+        top = result['results'][0]
+        top_title = top['title']
+        top_code  = top['code']
+
+        st.subheader(f'Jobs available now — {top_code} {top_title}')
+        st.caption('Live listings from SEEK and LinkedIn for your top-matched occupation. Results update in real time from live job boards.')
+
+        jobs_cache_key = f'jobs_{top_code}'
+
+        if jobs_cache_key not in st.session_state:
+            if st.button('Search live job boards (SEEK + LinkedIn)', key='find_jobs'):
+                with st.spinner('Searching SEEK and LinkedIn... (~45 seconds)'):
+                    st.session_state[jobs_cache_key] = fetch_all_jobs(top_title, n=3)
+                st.rerun()
+        else:
+            jobs = st.session_state[jobs_cache_key]
+            _render_jobs(jobs, top_title, top_code)
 
         st.divider()
 

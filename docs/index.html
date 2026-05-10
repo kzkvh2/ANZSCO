@@ -385,6 +385,18 @@
             const successId   = id === 'form-hero' ? 'success-hero'    : 'success-cta';
             document.getElementById(formStateId).classList.add('hidden');
             document.getElementById(successId).classList.remove('hidden');
+
+            // Add to Brevo list (best-effort, fire-and-forget)
+            const email = new FormData(form).get('email');
+            fetch('https://api.brevo.com/v3/contacts', {
+              method: 'POST',
+              headers: {
+                'accept': 'application/json',
+                'content-type': 'application/json',
+                'api-key': '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',
+              },
+              body: JSON.stringify({ email: email, listIds: [2], updateEnabled: true }),
+            }).catch(function() {});
           } else {
             throw new Error(data.message || 'Submission failed');
           }
