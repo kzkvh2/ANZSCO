@@ -22,7 +22,7 @@ from sentence_transformers import SentenceTransformer
 
 from src.rag.embedder import build_embeddings, embed_query, MODEL_NAME
 
-MODEL_EXTRACT = 'claude-sonnet-4-6'   # profile extraction — needs reasoning quality
+MODEL_EXTRACT = 'claude-haiku-4-5-20251001'  # structured extraction — Haiku is accurate and ~4x cheaper than Sonnet
 MODEL_RERANK  = 'claude-haiku-4-5-20251001'  # re-ranking — classification task, speed matters
 _st_model: SentenceTransformer | None = None
 _embeddings: np.ndarray | None = None
@@ -65,6 +65,7 @@ def _claude_client() -> anthropic.Anthropic:
 
 EXTRACT_SYSTEM = """You are a CV analyst. Extract the core professional profile from a CV.
 Return ONLY a JSON object with these fields:
+- name: full name of the person as it appears at the top of the CV (string, or null if not clearly present)
 - job_titles: list of job titles the person has held (most recent first)
 - duties: list of key duties and responsibilities (bullet point style, max 15)
 - skills: list of technical and professional skills

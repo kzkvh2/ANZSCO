@@ -2,9 +2,9 @@
 Live job search for a given occupation title.
 
 Sources:
-  - SEEK   : parseforge/seek-scraper Apify actor   (~4s)
-  - LinkedIn: curious_coder/linkedin-jobs-scraper   (~44s)
-  - Indeed  : no reliable scraper; caller should show a search link
+  - SEEK   : parseforge/seek-scraper Apify actor        (~4s)
+  - LinkedIn: curious_coder/linkedin-jobs-scraper        (~44s)
+  - Indeed  : misceres/indeed-scraper Apify actor        (~21s)
 
 Requires env var: APIFY_TOKEN
 """
@@ -83,15 +83,61 @@ def fetch_linkedin_jobs(title: str, n: int = 3) -> list[dict]:
     ]
 
 
+def fetch_indeed_jobs(title: str, n: int = 3) -> list[dict]:
+    items = _run_actor_sync(
+        'misceres~indeed-scraper',
+        {'position': title, 'country': 'AU', 'maxItems': n},
+        timeout_secs=60,
+    )
+    results = []
+    for j in items[:n]:
+        url = j.get('externalApplyLink') or j.get('url', '')
+        if not url:
+            continue
+        results.append({
+            'title': j.get('positionName', ''),
+            'company': j.get('company', ''),
+            'location': j.get('location', ''),
+            'url': url,
+            'salary': j.get('salary', ''),
+            'source': 'Indeed',
+        })
+    return results
+
+
 def fetch_all_jobs(title: str, n: int = 3) -> dict:
-    """Run SEEK and LinkedIn in parallel. Returns {'seek': [...], 'linkedin': [...]}."""
-    with concurrent.futures.ThreadPoolExecutor(max_workers=2) as ex:
-        seek_f = ex.submit(fetch_seek_jobs, title, n)
-        li_f = ex.submit(fetch_linkedin_jobs, title, n)
+    """Run SEEK, LinkedIn, and Indeed in parallel."""
+    with concurrent.futures.ThreadPoolExecutor(max_workers=3) as ex:
+        seek_f   = ex.submit(fetch_seek_jobs, title, n)
+        li_f     = ex.submit(fetch_linkedin_jobs, title, n)
+        indeed_f = ex.submit(fetch_indeed_jobs, title, n)
     return {
-        'seek': seek_f.result(),
+        'seek':    seek_f.result(),
         'linkedin': li_f.result(),
+        'indeed':  indeed_f.result(),
     }
+
+
+def fetch_jobs_for_codes(titles_by_code: dict[str, str], n: int = 3) -> dict[str, dict]:
+    """
+    Fetch jobs for multiple ANZSCO codes in parallel.
+
+    Args:
+        titles_by_code: {code: occupation_title, ...}
+        n: jobs per source per code
+
+    Returns:
+        {code: {'seek': [...], 'linkedin': [...], 'indeed': [...]}, ...}
+    """
+    results: dict[str, dict] = {}
+    with concurrent.futures.ThreadPoolExecutor(max_workers=min(9, len(titles_by_code) * 3)) as ex:
+        futures = {
+            code: ex.submit(fetch_all_jobs, title, n)
+            for code, title in titles_by_code.items()
+        }
+        for code, fut in futures.items():
+            results[code] = fut.result()
+    return results
 
 
 def seek_search_url(title: str) -> str:

@@ -17,13 +17,11 @@ import requests
 import streamlit as st
 from src.rag.cv_parser import extract_text, parsability_score
 from src.rag.matcher import match_cv, preload
-from src.jobs import fetch_all_jobs, seek_search_url, indeed_search_url, linkedin_search_url
+from src.jobs import fetch_jobs_for_codes, seek_search_url, indeed_search_url, linkedin_search_url
 
 WEB3FORMS_KEY = '7fdb3ee2-ba92-4fed-bcd8-ecc37e4e39a3'
 
 # Wire Apify token from Streamlit secrets into env so src/jobs.py can read it.
-# Wrapped in try/except: st.secrets raises FileNotFoundError when no secrets
-# are configured on Streamlit Cloud (e.g. fresh deployment).
 try:
     if 'APIFY_TOKEN' in st.secrets:
         os.environ['APIFY_TOKEN'] = st.secrets['APIFY_TOKEN']
@@ -31,21 +29,17 @@ except Exception:
     pass
 
 
-def _seek_url(title: str) -> str:
-    return f'https://www.seek.com.au/jobs?keywords={urllib.parse.quote_plus(title)}&where=All+Australia'
-
-
-def _lmi_url(code: str, title: str) -> str:
-    slug = re.sub(r'[^a-z0-9]+', '-', title.lower()).strip('-')
-    return f'https://labourmarketinsights.gov.au/occupation-profile/{slug}?occupationCode={code}'
+def _jsa_url(code: str) -> str:
+    return f'https://www.jobsandskills.gov.au/data/occupation-and-industry-profiles/occupations/{code}'
 
 
 def _render_jobs(jobs: dict, title: str, code: str) -> None:
-    """Render job results from SEEK, LinkedIn, and search links for Indeed + LMI."""
-    seek_jobs = jobs.get('seek', [])
-    li_jobs   = jobs.get('linkedin', [])
+    """Render job results from SEEK, LinkedIn, and Indeed in three columns."""
+    seek_jobs   = jobs.get('seek', [])
+    li_jobs     = jobs.get('linkedin', [])
+    indeed_jobs = jobs.get('indeed', [])
 
-    col_seek, col_li = st.columns(2)
+    col_seek, col_li, col_indeed = st.columns(3)
 
     with col_seek:
         st.markdown('**SEEK**')
@@ -75,11 +69,22 @@ def _render_jobs(jobs: dict, title: str, code: str) -> None:
         else:
             st.markdown(f'[Search all LinkedIn listings]({linkedin_search_url(title)})')
 
-    col_indeed, col_lmi = st.columns(2)
     with col_indeed:
-        st.markdown(f'**Indeed** — [Search all listings]({indeed_search_url(title)})')
-    with col_lmi:
-        st.markdown(f'**Labour market outlook** — [View occupation profile]({_lmi_url(code, title)})')
+        st.markdown('**Indeed**')
+        if indeed_jobs:
+            for j in indeed_jobs:
+                st.markdown(
+                    f'[{j["title"]}]({j["url"]})\n\n'
+                    f'<small>{j["company"]} · {j["location"]}'
+                    + (f' · {j["salary"]}' if j.get('salary') else '')
+                    + '</small>',
+                    unsafe_allow_html=True,
+                )
+                st.write('')
+        else:
+            st.markdown(f'[Search all Indeed listings]({indeed_search_url(title)})')
+
+    st.markdown(f'**Labour market outlook** — [View occupation profile on Jobs and Skills Australia]({_jsa_url(code)})')
 
 
 def _send_feedback(thumbs_up: bool, top_results: list[dict]) -> None:
@@ -98,7 +103,7 @@ def _send_feedback(thumbs_up: bool, top_results: list[dict]) -> None:
             timeout=5,
         )
     except Exception:
-        pass  # feedback is best-effort; don't surface errors to user
+        pass
 
 
 # ---------------------------------------------------------------------------
@@ -145,7 +150,6 @@ if uploaded:
             st.error(f'Could not read file: {e}')
             st.stop()
 
-    # Parsability score with actionable guidance
     parse_result = parsability_score(raw_text)
     score = parse_result['overall']
 
@@ -182,88 +186,115 @@ if uploaded:
                 st.error(f'Matching failed: {e}')
                 raise
 
-        profile = result['profile']
-        with st.expander('What we extracted from your CV'):
-            if profile.get('job_titles'):
-                st.write('**Job titles:**', ', '.join(profile['job_titles']))
-            if profile.get('skills'):
-                st.write('**Skills:**', ', '.join(profile['skills'][:12]))
-            if profile.get('industries'):
-                st.write('**Industries:**', ', '.join(profile['industries']))
+        st.session_state['match_result'] = result
 
+    if 'match_result' not in st.session_state:
+        st.stop()
+
+    result  = st.session_state['match_result']
+    profile = result['profile']
+
+    # Personalised greeting using extracted name
+    first_name = None
+    raw_name = profile.get('name') or ''
+    if raw_name and len(raw_name.strip()) > 1:
+        first_name = raw_name.strip().split()[0]
+
+    if first_name:
+        st.subheader(f'Hi {first_name} — here are your top ANZSCO matches')
+    else:
         st.subheader('Your top 5 ANZSCO matches')
 
-        CONFIDENCE_COLOUR = {'high': '🟢', 'medium': '🟡', 'low': '🔴'}
+    with st.expander('What we extracted from your CV'):
+        if profile.get('job_titles'):
+            st.write('**Job titles:**', ', '.join(profile['job_titles']))
+        if profile.get('skills'):
+            st.write('**Skills:**', ', '.join(profile['skills'][:12]))
+        if profile.get('industries'):
+            st.write('**Industries:**', ', '.join(profile['industries']))
 
-        for i, match in enumerate(result['results'], 1):
-            conf_icon = CONFIDENCE_COLOUR.get(match.get('confidence', 'low'), '🔴')
-            score_bar = '█' * (match['match_score'] // 10) + '░' * (10 - match['match_score'] // 10)
+    CONFIDENCE_COLOUR = {'high': '🟢', 'medium': '🟡', 'low': '🔴'}
 
-            with st.container(border=True):
-                c1, c2 = st.columns([3, 1])
-                with c1:
-                    st.markdown(f'**#{i} — {match["code"]} {match["title"]}**')
-                    st.caption(match.get('explanation', ''))
-                    st.markdown(
-                        f'[Search jobs on SEEK]({_seek_url(match["title"])}) · '
-                        f'[Labour market outlook]({_lmi_url(match["code"], match["title"])})',
-                    )
-                with c2:
-                    st.markdown(f'**{match["match_score"]}/100** {conf_icon}')
-                    st.caption(f'`{score_bar}`')
+    for i, match in enumerate(result['results'], 1):
+        conf_icon = CONFIDENCE_COLOUR.get(match.get('confidence', 'low'), '🔴')
+        score_bar = '█' * (match['match_score'] // 10) + '░' * (10 - match['match_score'] // 10)
 
-        timing = result['timing']
-        st.caption(
-            f'Total: {timing["total_ms"]}ms '
-            f'(extract {timing["extract_profile_ms"]}ms · '
-            f'retrieve {timing["retrieval_ms"]}ms · '
-            f'rank {timing["rerank_ms"]}ms)'
-        )
+        with st.container(border=True):
+            c1, c2 = st.columns([3, 1])
+            with c1:
+                st.markdown(f'**#{i} — {match["code"]} {match["title"]}**')
+                st.caption(match.get('explanation', ''))
+                st.markdown(
+                    f'[Search jobs on SEEK]({seek_search_url(match["title"])}) · '
+                    f'[Jobs and Skills Australia]({_jsa_url(match["code"])})',
+                )
+            with c2:
+                st.markdown(f'**{match["match_score"]}/100** {conf_icon}')
+                st.caption(f'`{score_bar}`')
 
-        st.warning(
-            'These codes are a guide only. Verify your final selection against the '
-            '[Home Affairs skilled occupation list](https://immi.homeaffairs.gov.au/visas/working-in-australia/skill-occupation-list) '
-            'before submitting a visa application.',
-            icon='⚠️',
-        )
+    timing = result['timing']
+    st.caption(
+        f'Total: {timing["total_ms"]}ms '
+        f'(extract {timing["extract_profile_ms"]}ms · '
+        f'retrieve {timing["retrieval_ms"]}ms · '
+        f'rank {timing["rerank_ms"]}ms)'
+    )
 
-        # -----------------------------------------------------------------------
-        # Live jobs section — top match only
-        # -----------------------------------------------------------------------
+    st.warning(
+        'These codes are a guide only. Verify your final selection against the '
+        '[Home Affairs skilled occupation list](https://immi.homeaffairs.gov.au/visas/working-in-australia/skill-occupation-list) '
+        'before submitting a visa application.',
+        icon='⚠️',
+    )
+
+    # -----------------------------------------------------------------------
+    # Live jobs — auto-load for all matches scoring > 70
+    # -----------------------------------------------------------------------
+    qualifying = [m for m in result['results'] if m.get('match_score', 0) > 70]
+
+    if qualifying:
         st.divider()
-        top = result['results'][0]
-        top_title = top['title']
-        top_code  = top['code']
+        person = f'{first_name}\'s' if first_name else 'Your'
+        st.subheader(f'Jobs available now — {person} top matches')
+        st.caption(
+            f'Live listings from SEEK, LinkedIn, and Indeed for your '
+            f'{len(qualifying)} occupation{"s" if len(qualifying) > 1 else ""} scoring above 70. '
+            'Results update in real time from live job boards.'
+        )
 
-        st.subheader(f'Jobs available now — {top_code} {top_title}')
-        st.caption('Live listings from SEEK and LinkedIn for your top-matched occupation. Results update in real time from live job boards.')
-
-        jobs_cache_key = f'jobs_{top_code}'
+        jobs_cache_key = 'jobs_' + '_'.join(m['code'] for m in qualifying)
 
         if jobs_cache_key not in st.session_state:
-            if st.button('Search live job boards (SEEK + LinkedIn)', key='find_jobs'):
-                with st.spinner('Searching SEEK and LinkedIn... (~45 seconds)'):
-                    st.session_state[jobs_cache_key] = fetch_all_jobs(top_title, n=3)
+            with st.spinner('Searching SEEK, LinkedIn, and Indeed... (~45 seconds)'):
+                titles_by_code = {m['code']: m['title'] for m in qualifying}
+                st.session_state[jobs_cache_key] = fetch_jobs_for_codes(titles_by_code, n=3)
+
+        all_jobs = st.session_state[jobs_cache_key]
+
+        if len(qualifying) == 1:
+            m = qualifying[0]
+            _render_jobs(all_jobs.get(m['code'], {}), m['title'], m['code'])
+        else:
+            tabs = st.tabs([f"{m['code']} {m['title']}" for m in qualifying])
+            for tab, m in zip(tabs, qualifying):
+                with tab:
+                    _render_jobs(all_jobs.get(m['code'], {}), m['title'], m['code'])
+
+    st.divider()
+
+    st.markdown('**Were these results helpful?**')
+    feedback_key = f'feedback_sent_{id(result)}'
+    if st.session_state.get(feedback_key):
+        st.success('Thanks for your feedback — it helps us improve the tool.')
+    else:
+        col_up, col_down, _ = st.columns([1, 1, 6])
+        with col_up:
+            if st.button('👍  Yes', key='fb_up'):
+                _send_feedback(True, result['results'])
+                st.session_state[feedback_key] = True
                 st.rerun()
-        else:
-            jobs = st.session_state[jobs_cache_key]
-            _render_jobs(jobs, top_title, top_code)
-
-        st.divider()
-
-        st.markdown('**Were these results helpful?**')
-        feedback_key = f'feedback_sent_{id(result)}'
-        if st.session_state.get(feedback_key):
-            st.success('Thanks for your feedback — it helps us improve the tool.')
-        else:
-            col_up, col_down, _ = st.columns([1, 1, 6])
-            with col_up:
-                if st.button('👍  Yes', key='fb_up'):
-                    _send_feedback(True, result['results'])
-                    st.session_state[feedback_key] = True
-                    st.rerun()
-            with col_down:
-                if st.button('👎  No', key='fb_down'):
-                    _send_feedback(False, result['results'])
-                    st.session_state[feedback_key] = True
-                    st.rerun()
+        with col_down:
+            if st.button('👎  No', key='fb_down'):
+                _send_feedback(False, result['results'])
+                st.session_state[feedback_key] = True
+                st.rerun()
