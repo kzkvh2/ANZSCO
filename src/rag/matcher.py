@@ -153,21 +153,21 @@ Your job is to identify the best-matching ANZSCO occupation codes for a given ca
 STRICT RULES:
 - Use ONLY codes and titles from the provided candidate list. Never invent codes or titles.
 - Copy the "code" and "title" fields EXACTLY as they appear in the candidate list.
+- Always return exactly 5 results. Only omit a result if it is completely irrelevant (score below 20).
 
 Score each match using this calibrated scale:
   90–100: Near-perfect — the candidate has performed this exact work under this occupation title
   70–89: Strong — core duties and skills substantially overlap
-  50–69: Partial — some relevant experience but meaningful overlap exists
-  Below 40: Weak — do not include
-
-Return your top 5 results. If a candidate is a genuinely poor fit (score below 40), omit it rather than padding the list — it is better to return 3 strong results than 5 where the last two are irrelevant.
+  50–69: Partial — relevant experience and transferable skills present
+  30–49: Possible — some overlap in duties or domain; worth flagging
+  Below 20: Irrelevant — no meaningful connection; omit
 
 For each result return:
 - code: the 6-digit ANZSCO code (copy exactly from candidate list)
 - title: the occupation title (copy exactly — do NOT paraphrase or substitute)
 - match_score: integer 0–100 using the calibrated scale above
 - explanation: one sentence referencing specific duties or skills from the CV that justify this score
-- confidence: "high" | "medium" | "low"
+- confidence: "high" (score ≥ 70) | "medium" (score 40–69) | "low" (score < 40)
 
 Return ONLY a JSON array. No other text."""
 
@@ -180,7 +180,7 @@ def rerank_with_claude(profile: dict, candidates: list[dict],
         'code': c['code'],
         'title': c['title'],
         'field': f"{c['major_title']} > {c['sub_major_title']}",
-        'description': c['embedding_text'][:400],
+        'description': c['embedding_text'],
         'cosine_score': round(c['cosine_score'], 3),
     } for c in candidates], indent=2)
 
@@ -245,7 +245,7 @@ def match_cv(raw_cv_text: str, top_k_candidates: int = 20) -> dict:
     timings['rerank_ms'] = int((time.perf_counter() - t0) * 1000)
 
     # Safety net: drop genuinely irrelevant results the model was told to omit
-    results = [r for r in results if r.get('match_score', 0) >= 35]
+    results = [r for r in results if r.get('match_score', 0) >= 20]
 
     timings['total_ms'] = sum(timings.values())
 
