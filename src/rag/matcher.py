@@ -184,11 +184,10 @@ STRICT RULES:
 Score each match using this calibrated scale:
   90–100: Near-perfect — the candidate has performed this exact work under this occupation title
   70–89: Strong — core duties and skills substantially overlap
-  50–69: Partial — some relevant experience but notable gaps in fit
-  Below 50: Weak — do NOT include these in your response
+  50–69: Partial — some relevant experience but meaningful overlap exists
+  Below 40: Weak — do not include
 
-Return between 1 and 5 results. Include ONLY codes scoring 55 or above.
-If fewer than 5 candidates reach that threshold, return only the ones that do — quality over quantity.
+Return your top 5 results. If a candidate is a genuinely poor fit (score below 40), omit it rather than padding the list — it is better to return 3 strong results than 5 where the last two are irrelevant.
 
 For each result return:
 - code: the 6-digit ANZSCO code (copy exactly from candidate list)
@@ -272,8 +271,8 @@ def match_cv(raw_cv_text: str, top_k_candidates: int = 20) -> dict:
     results = rerank_with_claude(profile, candidates, client)
     timings['rerank_ms'] = int((time.perf_counter() - t0) * 1000)
 
-    # Safety net: drop anything below threshold in case the model ignored the instruction
-    results = [r for r in results if r.get('match_score', 0) >= 55]
+    # Safety net: drop genuinely irrelevant results the model was told to omit
+    results = [r for r in results if r.get('match_score', 0) >= 35]
 
     timings['total_ms'] = sum(timings.values())
 

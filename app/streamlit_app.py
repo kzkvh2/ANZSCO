@@ -85,23 +85,26 @@ def _render_jobs(jobs: dict, title: str) -> None:
             st.markdown(f'[Search all Indeed listings →]({indeed_search_url(title)})')
 
 
-def _send_feedback(thumbs_up: bool, results: list[dict]) -> None:
+def _send_feedback(thumbs_up: bool, results: list[dict]) -> bool:
+    """Returns True if submission succeeded."""
     top = results[0] if results else {}
     all_codes = ', '.join(f"{r['code']} {r['title']}" for r in results)
     try:
-        requests.post(
+        r = requests.post(
             'https://api.web3forms.com/submit',
-            data={
+            json={
                 'access_key': WEB3FORMS_KEY,
                 'subject': f'ANZSCO Finder — {"👍" if thumbs_up else "👎"} feedback',
                 'top_result': f"{top.get('code')} {top.get('title')} ({top.get('match_score')}/100)",
                 'all_results': all_codes,
                 'feedback': 'Helpful' if thumbs_up else 'Not helpful',
+                'botcheck': '',
             },
-            timeout=5,
+            timeout=8,
         )
+        return r.ok
     except Exception:
-        pass
+        return False
 
 
 # ---------------------------------------------------------------------------
@@ -253,25 +256,13 @@ for i, match in enumerate(results, 1):
                 header += '  ⭐'
             st.markdown(header)
             st.caption(match.get('explanation', ''))
-            st.markdown(f'[Search jobs on SEEK →]({seek_search_url(match["title"])})')
+            st.markdown(
+                f'[Search jobs on SEEK →]({seek_search_url(match["title"])})  ·  '
+                f'[Find assessing authority →](https://immi.homeaffairs.gov.au/visas/working-in-australia/skills-assessment/skills-assessing-authorities)'
+            )
         with c2:
             st.markdown(f'**{match["match_score"]}/100** {conf_icon}')
             st.caption(label)
-
-with st.expander('Debug — extracted profile & timing'):
-    timing = result['timing']
-    st.caption(
-        f'Total: {timing["total_ms"]}ms  '
-        f'(extract {timing["extract_profile_ms"]}ms · '
-        f'retrieve {timing["retrieval_ms"]}ms · '
-        f'rank {timing["rerank_ms"]}ms)'
-    )
-    if profile.get('job_titles'):
-        st.write('**Job titles:**', ', '.join(profile['job_titles']))
-    if profile.get('skills'):
-        st.write('**Skills:**', ', '.join(profile['skills'][:15]))
-    if profile.get('industries'):
-        st.write('**Industries:**', ', '.join(profile['industries']))
 
 # ---------------------------------------------------------------------------
 # What to do next
@@ -292,13 +283,13 @@ st.markdown(
 # Live jobs — button-triggered
 # ---------------------------------------------------------------------------
 st.markdown('---')
-qualifying = [m for m in results if m.get('match_score', 0) > 70]
+qualifying = [m for m in results if m.get('match_score', 0) > 55] or results[:1]
 
 if qualifying:
     person = f"{first_name}'s" if first_name else 'Your'
     st.subheader(f'Live job listings — {person} top matches')
     st.caption(
-        f'{len(qualifying)} occupation{"s" if len(qualifying) > 1 else ""} scored above 70. '
+        f'Showing jobs for {len(qualifying)} occupation{"s" if len(qualifying) > 1 else ""}. '
         'Searches SEEK, LinkedIn, and Indeed simultaneously (~45 seconds).'
     )
 
@@ -339,16 +330,23 @@ st.markdown('---')
 st.markdown('**Were these results helpful?**')
 feedback_key = f'feedback_{file_hash}'
 if st.session_state.get(feedback_key):
-    st.success('Thanks for your feedback — it helps us improve the tool.')
+    if st.session_state.get(f'{feedback_key}_err'):
+        st.warning('Feedback recorded locally but could not reach our server — please try again later.')
+    else:
+        st.success('Thanks for your feedback — it helps us improve the tool.')
 else:
     col_up, col_down, _ = st.columns([1, 1, 6])
     with col_up:
         if st.button('👍  Yes', key='fb_up'):
-            _send_feedback(True, results)
+            ok = _send_feedback(True, results)
             st.session_state[feedback_key] = True
+            if not ok:
+                st.session_state[f'{feedback_key}_err'] = True
             st.rerun()
     with col_down:
         if st.button('👎  No', key='fb_down'):
-            _send_feedback(False, results)
+            ok = _send_feedback(False, results)
             st.session_state[feedback_key] = True
+            if not ok:
+                st.session_state[f'{feedback_key}_err'] = True
             st.rerun()
