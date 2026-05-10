@@ -101,21 +101,21 @@ def _send_feedback(thumbs_up: bool, top_results: list[dict]) -> None:
         pass  # feedback is best-effort; don't surface errors to user
 
 
-@st.cache_resource(show_spinner="Loading ANZSCO knowledge base — first launch takes ~1 min...")
-def _preload():
-    preload()
-
-_preload()
-
-
 # ---------------------------------------------------------------------------
-# Page config
+# Page config — must be the first Streamlit command
 # ---------------------------------------------------------------------------
 st.set_page_config(
     page_title='ANZSCO Code Finder',
     page_icon='🎯',
     layout='centered',
 )
+
+
+@st.cache_resource(show_spinner="Loading ANZSCO knowledge base — first launch takes ~1 min...")
+def _preload():
+    preload()
+
+_preload()
 
 st.title('ANZSCO Code Finder')
 st.caption('Upload your CV and get your top 5 ANZSCO occupation codes for Australian skilled migration visas.')
