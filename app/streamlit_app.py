@@ -10,12 +10,23 @@ Run:
 import sys, pathlib
 sys.path.insert(0, str(pathlib.Path(__file__).parent.parent))
 
+import re
+import urllib.parse
 import requests
 import streamlit as st
 from src.rag.cv_parser import extract_text, parsability_score
 from src.rag.matcher import match_cv, preload
 
 WEB3FORMS_KEY = '7fdb3ee2-ba92-4fed-bcd8-ecc37e4e39a3'
+
+
+def _seek_url(title: str) -> str:
+    return f'https://www.seek.com.au/jobs?keywords={urllib.parse.quote_plus(title)}&where=All+Australia'
+
+
+def _lmi_url(code: str, title: str) -> str:
+    slug = re.sub(r'[^a-z0-9]+', '-', title.lower()).strip('-')
+    return f'https://labourmarketinsights.gov.au/occupation-profile/{slug}?occupationCode={code}'
 
 
 def _send_feedback(thumbs_up: bool, top_results: list[dict]) -> None:
@@ -140,6 +151,10 @@ if uploaded:
                 with c1:
                     st.markdown(f'**#{i} — {match["code"]} {match["title"]}**')
                     st.caption(match.get('explanation', ''))
+                    st.markdown(
+                        f'[Search jobs on SEEK]({_seek_url(match["title"])}) · '
+                        f'[Labour market outlook]({_lmi_url(match["code"], match["title"])})',
+                    )
                 with c2:
                     st.markdown(f'**{match["match_score"]}/100** {conf_icon}')
                     st.caption(f'`{score_bar}`')
